@@ -1,1 +1,3 @@
 # pymcce
+
+MCCE in Python
