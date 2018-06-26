@@ -28,8 +28,8 @@ t        step 4: monte carlo sampling                       (DO_MONTE)
 Less modified entries
 ------------------------------------------------------------------------------
 8.0      Protein dielectric constant for DelPhi             (EPSILON_PROT)
-/home/jmao/benchmark/E08/extra.tpl                          (EXTRA)
-/home/jmao/benchmark/name.txt MCCE renaming rule.           (RENAME_RULES)
+./extra.ftpl                          (EXTRA)
+./name.txt MCCE renaming rule.           (RENAME_RULES)
 
 ph       "ph" for pH titration, "eh" for eh titration       (TITR_TYPE)
 0.0      Initial pH                                         (TITR_PH0)
