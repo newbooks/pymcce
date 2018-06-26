@@ -56,7 +56,7 @@ class Env:
         lines = open(file).readlines()
         for line in lines:
             line = line.split("#")[0]
-            
+
 
         return
 
