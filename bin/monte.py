@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-import sys, time
+import sys
+import time
+import os.path
 
 int_values = ["TITR_STEPS"]
 
@@ -8,8 +10,17 @@ class Env:
     def __init__(self):
         # Hard define values
         self.runprm = "run.prm"
+        self.constants = {
+            "VERSION": "PyMCCE 0.1",
+            "FN_CONFLIST1": "head1.lst",
+            "FN_CONFLIST2": "head2.lst",
+            "FN_CONFLIST3": "head3.lst",
+            "ENERGY_TABLE": "energies"
+        }
         self.var = {}
         self.param = {}
+        self.load_runprm()
+        self.read_extra()
         return
 
     def set(self, key, value):
@@ -80,6 +91,11 @@ class Env:
 
         return
 
+    def print_param(self):
+        for key in self.param.keys():
+            print("%-25s:%s" % (key, str(self.param[key])))
+        return
+
     def read_extra(self):
         """Read extra.tpl."""
         self.load_tpl(self.var["EXTRA"])
@@ -108,30 +124,84 @@ class Env:
         print("   Done\n")
         return
 
-class Head3List:
-    def __init__(self, fname):
-        lines = open(fname).readlines()
-        lines.pop(0)
-        self.conf_crg = []
-        self.conf_name = []
-        for line in lines:
-            fields = line.split()
-            self.conf_name.append(fields[1])
-            self.conf_crg.append(float(fields[4]))
+
+class Conformer:
+    def __init__(self, fields):
+        self.confname = fields[1]
+        self.flag = fields[2]
+        self.occ = float(fields[3])
+        self.crg = float(fields[4])
+        self.em0 = float(fields[5])
+        self.pk0 = float(fields[6])
+        self.ne = int(fields[7])
+        self.nh = int(fields[8])
+        self.vdw0 = float(fields[9])
+        self.vdw1 = float(fields[10])
+        self.tors = float(fields[11])
+        self.epol = float(fields[12])
+        self.dsolv = float(fields[13])
+        self.extra = float(fields[14])
+        self.history = fields[15]
+        self.entropy = 0.0   # -TS, will be calculated at entropy sampling
         return
+
 
 class Protein:
     def __init__(self):
         # Hard coded variables
-        self.head3list_fname = "head3.lst"
+        self.head3list = []
+        self.pairwise = {}
         return
 
-    def monte_read_headlist(self):
+    def load_energy(self, env):
+        self.read_headlist(env)
+        self.read_pairwise(env)
+
+    def read_headlist(self, env):
         """Read head3.lst."""
-        print("   Load conformer list from file %s..." % self.head3list_fname)
-        self.head3list = Head3List(self.head3list_fname)
+        fname = env.constants["FN_CONFLIST3"]
+        print("   Load conformer list from file %s..." % fname)
+        lines = open(fname).readlines()
+        lines.pop(0)
+        for line in lines:
+            fields = line.split()
+            if len(fields) >= 16:
+                conf = Conformer(fields)
+                self.head3list.append(conf)
+
+        # validate
+        confnames = [x.confname for x in self.head3list]
+        for name in confnames:
+            if len(name) != 14:
+                print("%s is not a conformer name.")
+                sys.exit()
+            occurrence = confnames.count(name)
+            if occurrence > 1:
+                print("Conformer %s occurred %d times" % occurrence)
+                sys.exit()
+        return
+
+    def print_headlist(self):
+        c = 0
+        for conf in self.head3list:
+            print("%05d %s" % (c, conf.confname))
+            c += 1
+        return
+
+    def read_pairwise(self, env):
+        """Read pairwise interactions from opp files in folder."""
+        folder = env.constants["ENERGY_TABLE"]
+        print("   Load pairwise interactions from opp file in folder %s ..." % folder)
+        for i in range(len(self.head3list)):
+            conf = self.head3list[i]
+            oppfile = "%s/%s.opp" % (folder, conf.confname)
+            if os.path.isfile(oppfile):
+                lines = open(oppfile)
+            else:
+
 
         return
+
 
 
 class Residue:
@@ -148,19 +218,18 @@ def monte(env):
     env.print_scaling()
 
     prot = Protein()
-    prot.monte_read_headlist()
+    prot.load_energy(env)
+    #prot.print_headlist()
 
 
 
-
+    timerB = time.time()
+    print("Total time on MC: %1d seconds.\n" % (timerB-timerA))
     return
 
 
 if __name__ == "__main__":
     env = Env()
-    env.load_runprm()
-    env.read_extra()
-    env.print_runprm()
 
     print("Doing step 4. Monte Carlo sampling")
     monte(env)
