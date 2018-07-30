@@ -10,15 +10,17 @@ class Env:
     def __init__(self):
         # Hard define values
         self.runprm = "run.prm"
-        self.constants = {
-            "VERSION": "PyMCCE 0.1",
-            "FN_CONFLIST1": "head1.lst",
-            "FN_CONFLIST2": "head2.lst",
-            "FN_CONFLIST3": "head3.lst",
-            "ENERGY_TABLE": "energies"
-        }
+        self.version = "PyMCCE 0.1"
+        self.fn_conflist1 = "head1.lst"
+        self.fn_conflist2 = "head2.lst"
+        self.fn_conflist3 = "head3.lst"
+        self.energy_table = "energies"
+        # run.prm parameters key:value
         self.var = {}
+        # tpl parameters (key1, key2, key3):value
         self.param = {}
+
+        # load parameters
         self.load_runprm()
         self.read_extra()
         return
@@ -135,14 +137,19 @@ class Conformer:
         self.pk0 = float(fields[6])
         self.ne = int(fields[7])
         self.nh = int(fields[8])
-        self.vdw0 = float(fields[9])
-        self.vdw1 = float(fields[10])
-        self.tors = float(fields[11])
-        self.epol = float(fields[12])
-        self.dsolv = float(fields[13])
+        self.vdw0 = float(fields[9]) * env.param[("SCALING", "VDW0")]
+        self.vdw1 = float(fields[10]) * env.param[("SCALING", "VDW1")]
+        self.tors = float(fields[11]) * env.param[("SCALING", "TORS")]
+        self.epol = float(fields[12]) * env.param[("SCALING", "ELE")]
+        self.dsolv = float(fields[13]) * env.param[("SCALING", "DSOLV")]
         self.extra = float(fields[14])
         self.history = fields[15]
         self.entropy = 0.0   # -TS, will be calculated at entropy sampling
+        return
+
+
+class Residue:
+    def __init__(self):
         return
 
 
@@ -150,6 +157,7 @@ class Protein:
     def __init__(self):
         # Hard coded variables
         self.head3list = []
+        self.confnames = []
         self.pairwise = {}
         return
 
@@ -159,7 +167,7 @@ class Protein:
 
     def read_headlist(self, env):
         """Read head3.lst."""
-        fname = env.constants["FN_CONFLIST3"]
+        fname = env.fn_conflist3
         print("   Load conformer list from file %s..." % fname)
         lines = open(fname).readlines()
         lines.pop(0)
@@ -170,12 +178,12 @@ class Protein:
                 self.head3list.append(conf)
 
         # validate
-        confnames = [x.confname for x in self.head3list]
-        for name in confnames:
+        self.confnames = [x.confname for x in self.head3list]
+        for name in self.confnames:
             if len(name) != 14:
                 print("%s is not a conformer name.")
                 sys.exit()
-            occurrence = confnames.count(name)
+            occurrence = self.confnames.count(name)
             if occurrence > 1:
                 print("Conformer %s occurred %d times" % occurrence)
                 sys.exit()
@@ -190,22 +198,63 @@ class Protein:
 
     def read_pairwise(self, env):
         """Read pairwise interactions from opp files in folder."""
-        folder = env.constants["ENERGY_TABLE"]
+        folder = env.energy_table
         print("   Load pairwise interactions from opp file in folder %s ..." % folder)
         for i in range(len(self.head3list)):
             conf = self.head3list[i]
             oppfile = "%s/%s.opp" % (folder, conf.confname)
             if os.path.isfile(oppfile):
                 lines = open(oppfile)
-            else:
-
-
+                for line in lines:
+                    fields = line.split()
+                    if len(fields) < 7:
+                        continue
+                    confname = fields[1]
+                    j = self.confnames.index(confname)
+                    if j < 0:
+                        print("      Warning: %s in file %s is not a conformer" % (confname, oppfile))
+                        continue
+                    ele = float(fields[2])
+                    vdw = float(fields[3])
+                    self.pairwise[(i, j)] = (ele * env.param[("SCALING", "ELE")], vdw * env.param[("SCALING", "VDW")])
+            else:   # No opp files, assume all interactions to be 0, and no entries in the pairwise{}
+                pass
         return
 
+    def group_to_residues(self):
+        # Residues will be put into an irregular 2D array, the rows are residue index and the elements in row are
+        # conformer indices.
+        # Residues will be further divided into fixed residues and free residues upon examination
+        residue_ids = []
+        for confname in self.confnames:
+            resid = confname[:3] + confname[5:11]
+            if resid not in residue_ids:
+                residue_ids.append(resid)
+        self.residues = [[] for i in range(len(residue_ids))]
+        for i in range(len(self.confnames)):
+            confname = self.confnames[i]
+            resid = confname[:3] + confname[5:11]
+            index = residue_ids.index(resid)
+            self.residues[index].append(i)
+
+        # Find free and fixed residues
+        # if total occ of "t" flagged conformers is 1:
+        #    the rest conformers will be set to "t 0.00", and this residue is "fixed"
+        # else if total occ of "t" flagged conformers is 0:
+        #    if only one conformer is left:
+        #        the lone conformer is set to "t 1.00", and this conformer and this residue will be "fixed"
+        #    else:
+        #        this residue is "free"
+        # otherwise:
+        #    partial occupancy
 
 
-class Residue:
-    def __init__(self):
+        # only one free conformer. -> t (1.00 - sigma(other occ))
+        # sigma occ is already 1.0. The rest -> t 0.00
+        # sigma occ is not 0 or 1.0 when will be considered as an error.
+
+
+
         return
 
 
@@ -219,6 +268,9 @@ def monte(env):
 
     prot = Protein()
     prot.load_energy(env)
+    prot.group_to_residues()
+
+
     #prot.print_headlist()
 
 
