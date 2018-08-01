@@ -42,11 +42,11 @@ class Env:
         # Sample line: "t        step 1: pre-run, pdb-> mcce pdb                    (DO_PREMCCE)"
         for line in lines:
             line = line.strip()
-            line = line.split("#")[0]   # This cuts off everything after #
+            line = line.split("#")[0]  # This cuts off everything after #
             left_p = line.find("(")
             right_p = line.find(")")
 
-            if left_p > 0 and right_p > left_p+1:
+            if left_p > 0 and right_p > left_p + 1:
                 key = line[left_p + 1:right_p]
                 fields = line[:left_p].split()
                 if len(fields) < 1:
@@ -115,7 +115,7 @@ class Env:
 
     def print_scaling(self):
         """Print scaling factors."""
-        #print self.param
+        # print self.param
         print("   Scaling factors:")
         print("   VDW0  = %.3f" % self.param[("SCALING", "VDW0")])
         print("   VDW1  = %.3f" % self.param[("SCALING", "VDW1")])
@@ -129,6 +129,7 @@ class Env:
 
 class Conformer:
     def __init__(self, fields):
+        self.iConf = int(fields[0])
         self.confname = fields[1]
         self.flag = fields[2]
         self.occ = float(fields[3])
@@ -144,8 +145,21 @@ class Conformer:
         self.dsolv = float(fields[13]) * env.param[("SCALING", "DSOLV")]
         self.extra = float(fields[14])
         self.history = fields[15]
-        self.entropy = 0.0   # -TS, will be calculated at entropy sampling
+        self.entropy = 0.0  # -TS, will be calculated at entropy sampling
         return
+
+    def printme(self):
+        print("%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" % (self.iConf,
+                                                                                                   self.confname,
+                                                                                                   self.flag, self.occ,
+                                                                                                   self.crg,
+                                                                                                   self.em0, self.pk0,
+                                                                                                   self.ne, self.nh,
+                                                                                                   self.vdw0, self.vdw1,
+                                                                                                   self.tors, self.epol,
+                                                                                                   self.dsolv,
+                                                                                                   self.extra,
+                                                                                                   self.history))
 
 
 class Residue:
@@ -217,7 +231,7 @@ class Protein:
                     ele = float(fields[2])
                     vdw = float(fields[3])
                     self.pairwise[(i, j)] = (ele * env.param[("SCALING", "ELE")], vdw * env.param[("SCALING", "VDW")])
-            else:   # No opp files, assume all interactions to be 0, and no entries in the pairwise{}
+            else:  # No opp files, assume all interactions to be 0, and no entries in the pairwise{}
                 pass
         return
 
@@ -237,23 +251,55 @@ class Protein:
             index = residue_ids.index(resid)
             self.residues[index].append(i)
 
-        # Find free and fixed residues
+        # Verify head3list flag and occ; Find free and fixed residues
         # if total occ of "t" flagged conformers is 1:
-        #    the rest conformers will be set to "t 0.00", and this residue is "fixed"
+        # the rest conformers will be set to "t 0.00", and this residue is "fixed"
         # else if total occ of "t" flagged conformers is 0:
         #    if only one conformer is left:
         #        the lone conformer is set to "t 1.00", and this conformer and this residue will be "fixed"
         #    else:
-        #        this residue is "free"
+        #        this residue is "free" and occ of conformers is 0.
         # otherwise:
-        #    partial occupancy
-
-
-        # only one free conformer. -> t (1.00 - sigma(other occ))
-        # sigma occ is already 1.0. The rest -> t 0.00
-        # sigma occ is not 0 or 1.0 when will be considered as an error.
-
-
+        #    partial fixed occupancy not allowed
+        self.fixed_conformers = []
+        self.free_residues = []
+        print("   Grouping and verifying conformers ...")
+        for res in self.residues:
+            socc = 0.0
+            n_freeconf = len(res)
+            for i in res:
+                if self.head3list[i].flag.upper() == "T":
+                    socc += self.head3list[i].occ
+                    n_freeconf -= 1
+            if abs(socc - 1.0) < 0.001:  # total occ of fixed conformers are 1.0
+                for i in res:
+                    self.fixed_conformers.append(i)
+                    if self.head3list[i].flag.upper() != "T":
+                        print("      %s %c %4.2f -> %s t  0.00" % (self.head3list[i].confname, self.head3list[i].flag, self.head3list[i].occ, self.head3list[i].confname))
+                        self.head3list[i].occ = 0.0
+                        self.head3list[i].flag = "t"
+            elif abs(socc) < 0.001:  # total occ is 0
+                if n_freeconf == 1:
+                    for i in res:
+                        if self.head3list[i].flag.upper() != "T":
+                            print("      %s %c %4.2f -> %s t  1.00" % (self.head3list[i].confname, self.head3list[i].flag, self.head3list[i].occ, self.head3list[i].confname))
+                            self.head3list[i].flag = "t"
+                            self.head3list[i].occ = 1.0
+                            break  # because only one "f"
+                else:
+                    free_conformers = []
+                    for i in res:
+                        if self.head3list[i].flag.upper() == "T":
+                            self.fixed_conformers.append(i)
+                        else:
+                            free_conformers.append(i)
+                    self.free_residues.append(free_conformers)
+            else:  # total occ is neither 0 or 1
+                print("   Error: Total residue occupancy is %.2f, 0.00 or 1.00 expected." % socc)
+                for i in res:
+                    self.head3list[i].printme()
+                print("   Exiting ...")
+                sys.exit()
 
         return
 
@@ -271,12 +317,12 @@ def monte(env):
     prot.group_to_residues()
 
 
-    #prot.print_headlist()
+    # prot.print_headlist()
 
 
 
     timerB = time.time()
-    print("Total time on MC: %1d seconds.\n" % (timerB-timerA))
+    print("Total time on MC: %1d seconds.\n" % (timerB - timerA))
     return
 
 
