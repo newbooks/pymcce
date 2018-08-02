@@ -1,0 +1,7 @@
+   Rotamer making statitics:
+   Residue   Start  Clean   Swap Rotate   Self  Hbond Repack  Ioni.   TorH     OH  Elect
+   NTRA0251      1      1      1      1      1      1      1      2      2      2      2
+   TYRA0251      1      1      1      1      1      1      1      2      2     10      6
+   ASPA0252      1      1      1      1      1      1      1      3      5     11      5
+   CTRA0252      1      1      1      1      1      1      1      3      5      5      5
+   Total         4      4      4      4      4      4      4     10     14     28     18

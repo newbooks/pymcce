@@ -41,19 +41,26 @@ Conformer:
     ->  self.extra = float(fields[14])
     ->  self.history = fields[15]
     ->  self.entropy = 0.0   # -TS, will be calculated at entropy sampling
+    ->  self.fixed_occ       # It starts as occ, updated with reduction
 
 
 prot:
     -> self.head3list = []   (list of conformers in conformer structure, which has head3.lst terms)
+    -> self.sel_energy = []  (list of self energy of each conformers, this changes with ph and entropy)
     -> self.confnames = []  (a list of conformer names for quick reference and indexing)
-    -> self.pairwise = {} (pairwise interaction (i,j):(ele * scaling_ele, vdw * scaling_vdw)
+    -> self.pairwise = {} (pairwise interaction (i,j):ele * scaling_ele + vdw * scaling_vdw
     -> self.residues = [[]] (irregular 2d arrays that store residues in rows and conformer indices in column)
     -> self.fixed_conformers[]  (a list of fixed conformers, may have partial occ. This may vary )
+    -> self.fixed_occ[] (match fixed_conformers, the occupancy of fixed conformers, using head3list and reduction)
     -> self.free_residues[[]] (free residues in rows and flippable conformers in column)
     -> self.fixed_conformers_running[]  (a copy, this data can be altered during reduced run)
     -> self.free_residues_running[[]] (a copy, this data can be altered during reduced run)
+    -> self.biglist[[]] (size of free_residues_running, holds indices to res with big interaction to each residue)
+    -> self.titration_type = "pH" or "Eh"
+    -> self.pH  (current pH)
+    -> self.Eh  (current Eh)
 
-microstate:
+microstate: (in function monte())
     -> state[] ( a selection of conformers, one per free residue)
     -> self.complete_state[] (a merge of selected conformers composed by adding state[] and fixed_conformers[])
     -> E_state (state energy from direct calculation, sigma[complete_state * occ if partial])
