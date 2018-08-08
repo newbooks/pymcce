@@ -46,8 +46,8 @@ class Env:
         for line in lines:
             line = line.strip()
             line = line.split("#")[0]  # This cuts off everything after #
-            left_p = line.rfind("(")
-            right_p = line.rfind(")")
+            left_p = line.find("(")
+            right_p = line.find(")")
 
             if left_p > 0 and right_p > left_p + 1:
                 key = line[left_p + 1:right_p]
@@ -318,9 +318,6 @@ class Protein:
                 print("   Exiting ...")
                 sys.exit()
 
-        return
-
-    def make_running_copy(self):
         # Make a running copy and update biglist
         for conf in self.head3list:
             conf.fixed_occ = conf.occ
@@ -349,10 +346,6 @@ class Protein:
                             biglist[jr].append(ir)
                             next_jr = True
         return biglist
-
-
-#class MicroState:
-
 
 
 def randomize_state(free_res):
@@ -405,38 +398,27 @@ def monte():
     prot.load_energy()
     prot.group_to_residues()
 
-    titration_type = env.var["TITR_TYPE"].upper()
-    init_ph = env.var["TITR_PH0"]
-    step_ph = env.var["TITR_PHD"]
-    init_eh = env.var["TITR_EH0"]
-    step_eh = env.var["TITR_EHD"]
-    steps = env.var["TITR_STEPS"]
-    detail_log = open("mc.out", "w")
+    # Gnerate a microstate in size of prot.free_residues_running[]
+    state = randomize_state(prot.free_residues_running)
+    complete_state = prot.fixed_conformers_running + state
+    complete_state.sort()
 
-    timerB = time.time()
-    print("   Done setting up MC in %1d seconds.\n" % (timerB - timerA))
+    prot.ph = 7.0
+    prot.eh = 0.0
+    prot.update_self_energy()
 
-    for i in range(steps):
-        if titration_type == "PH":
-            ph = init_ph + i * step_ph
-            eh = init_eh
-        elif titration_type == "EH":
-            ph = init_ph
-            eh = init_eh + i * step_eh
-        else:
-            print("   Error: Titration type is %s. It has to be ph or eh in line (TITR_TYPE) in run.prm" % titration_type)
-            sys.exit()
-        prot.make_running_copy()
-
-        print("      Titration at ph = %5.2f and eh = %.0f mv." % (ph, eh))
-        # Gnerate a microstate in size of prot.free_residues_running[]
-        state = randomize_state(prot.free_residues_running)
-        #complete_state = prot.fixed_conformers_running + state
-        #complete_state.sort()
+    lines = open("states").readlines()
+    for line in lines:
+        state = [int(x) for x in line.split()]
+        E_state = get_E(state, prot)
+        print("[%s] E_state=%.4f" % (" ".join(str(x) for x in state), E_state))
 
 
+    #E_state = get_E(complete_state, prot)
 
-    detail_log.close()
+    #print(complete_state)
+    #print("E_state = %.2f" % E_state)
+
     timerB = time.time()
     print("Total time on MC: %1d seconds.\n" % (timerB - timerA))
     return
