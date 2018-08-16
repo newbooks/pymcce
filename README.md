@@ -63,9 +63,29 @@ prot:
 MicroState: (in function monte())
     -> self.state  (selection of conformers in free residues)
     -> self.fixed_conformers   (conformers that are fixed)
-    -> self.fixed_occ        (fixed partial occupancy indexed as by conformer as in head3list)
     -> self.complete_state   (merged state: fixed_conformers + state)
     -> self.E_state          (micro state energy)
     -> randomized_state(prot)
-    -> combine_complete_state()       (combine fixed and free and sort)
     -> get_E()
+
+
+Monte Carlo subroutines:
+    Basic function:
+    mc_run(prot = prot, state = state, N=env.var["MONTE_NITER"]*len(prot.head3list), record = False)
+        This will run Monte Carlo sampling N times, and record the statistics in prot.head3list[i].count
+
+    Application:
+    mc_annealing(prot = prot, start_T = env.var["MONTE_T"] + 1000, nsteps = 100)
+        run mc_run() nsteps to env.var["MONTE_T"], return the state, do not record the statistics
+
+    mc_equilibration(prot = prot, state, N = env.var["MONTE_NEQ"]*len(prot.head3list))
+        starting from last state, run mc_run() with N samplings, and return the end state, do not record the statistics
+
+    mc_reduce(prot = prot, n = 6)
+        run mc_annealing(), mc_equilibration(), and mc_run() for n independent times to remove unoppcupied conformers
+
+    mc_entropy(prot = prot, n = 6)
+        run mc_annealing(), mc_equilibration(), and mc_run() for up to n independent times to calculate entropy
+
+    mc_sample(prot = prot)
+        run mc_annealing(), mc_equilibration(), and mc_run() to collect statistics

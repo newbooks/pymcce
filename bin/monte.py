@@ -4,9 +4,13 @@ import time
 import os.path
 from copy import deepcopy
 import random
+import math
 
 ROOMT = 298.15
 PH2KCAL = 1.364
+KCAL2KT = 1.688
+KJ2KCAL = 0.239
+
 
 class Env:
     def __init__(self):
@@ -30,8 +34,9 @@ class Env:
     def set(self, key, value):
         # Known non-string value are converted, otherwise string presumed
         float_values = ["EPSILON_PROT", "TITR_PH0", "TITR_PHD", "TITR_EH0", "TITR_EHD", "CLASH_DISTANCE",
-                        "BIG_PAIRWISE", "MONTE_T"]
-        int_values = ["TITR_STEPS"]
+                        "BIG_PAIRWISE", "MONTE_T", "MONTE_REDUCE"]
+        int_values = ["TITR_STEPS", "MONTE_RUNS", "MONTE_TRACE", "MONTE_NITER", "MONTE_NEQ",
+                      "MONTE_NSTART", "MONTE_FLIPS"]
         if key in float_values:
             self.var[key] = float(value)
         elif key in int_values:
@@ -132,6 +137,7 @@ class Env:
 
 class Conformer:
     def __init__(self, fields):
+        # from head3.lst
         self.iConf = int(fields[0])
         self.confname = fields[1]
         self.flag = fields[2]
@@ -148,7 +154,15 @@ class Conformer:
         self.dsolv = float(fields[13]) * env.param[("SCALING", "DSOLV")]
         self.extra = float(fields[14])
         self.history = fields[15]
+        # from MC entropy sampling
         self.entropy = 0.0  # -TS, will be calculated at entropy sampling
+        # needed by MC process
+        self.E_self = 0.0     # self energy in head3.lst
+        self.E_self_mfe = 0.0 # self energy including pairwise contribution from fixed residues
+        self.fixed_occ = 0.0 # a copy of occ whose conformation is fixed.
+        self.counter = 0    # MC counters
+        self.acc_counter = 0 # MC accumulative counters
+        self.mc_occ = 0.0   # MC calculated occ
         return
 
     def printme(self):
@@ -173,7 +187,6 @@ class Protein:
         self.pairwise = {}
         self.fixed_conformers = []
         self.free_residues = []
-        self.self_energy = []
         self.ph = 0.0
         self.eh = 0.0
         return
@@ -204,6 +217,7 @@ class Protein:
             if occurrence > 1:
                 print("Conformer %s occurred %d times" % occurrence)
                 sys.exit()
+
         return
 
     def print_headlist(self):
@@ -237,20 +251,15 @@ class Protein:
                     if resid_i != resid_j:  # not within a residue
                         ele = float(fields[2])
                         vdw = float(fields[3])
-                        self.pairwise[(i, j)] = ele * env.param[("SCALING", "ELE")] + vdw * env.param[("SCALING", "VDW")]
+                        pw = ele * env.param[("SCALING", "ELE")] + vdw * env.param[("SCALING", "VDW")]
+                        if (j, i) in self.pairwise:    # average if other direction exists
+                            pw = 0.5 * (pw + self.pairwise[(j,i)])
+                        self.pairwise[(i, j)] = self.pairwise[(j, i)] = pw   # use the same value for both directions by default
+
             else:  # No opp files, assume all interactions to be 0, and no entries in the pairwise{}
                 pass
         return
 
-    def update_self_energy(self):
-        # This changes with entropy sampling
-        for conf in self.head3list:
-            monte_temp = env.var["MONTE_T"]
-            E_ph = monte_temp / ROOMT * conf.nh * (self.ph - conf.pk0) * PH2KCAL
-            E_eh = monte_temp / ROOMT * conf.ne * (self.eh - conf.em0) * PH2KCAL/58.0
-            Eself = conf.vdw0 + conf.vdw1 + conf.epol + conf.tors + conf.dsolv + conf.extra + E_ph + E_eh + conf.entropy
-            self.self_energy.append(Eself)
-        return
 
     def group_to_residues(self):
         # Residues will be put into an irregular 2D array, the rows are residue index and the elements in row are
@@ -320,14 +329,6 @@ class Protein:
 
         return
 
-    def make_running_copy(self):
-        # Make a running copy and update biglist
-        for conf in self.head3list:
-            conf.fixed_occ = conf.occ
-        self.fixed_conformers_running = deepcopy(self.fixed_conformers)
-        self.free_residues_running = deepcopy(self.free_residues)
-        self.biglist = self.make_biglist(self.free_residues_running)
-        return
 
     def make_biglist(self, free_residues):
         biglist = [[] for i in range(len(free_residues))]
@@ -351,50 +352,210 @@ class Protein:
         return biglist
 
 
-#class MicroState:
+class MicroState:
+    def __init__(self, prot):
+        self.E_state = 0.0
+        self.fixed_conformers = deepcopy(prot.fixed_conformers)
+        for conf in prot.head3list:
+            conf.fixed_occ = conf.occ
+        self.free_residues = deepcopy(prot.free_residues)
+        self.biglist = self.make_biglist(prot)
+        self.state = self.randomize_state()
+        self.complete_state = []
+        return
+
+    def update_self_energy(self, prot):
+        # This changes with entropy sampling
+        for ic in range(len(prot.head3list)):
+            conf = prot.head3list[ic]
+            monte_temp = env.var["MONTE_T"]
+            E_ph = monte_temp / ROOMT * conf.nh * (prot.ph - conf.pk0) * PH2KCAL
+            E_eh = monte_temp / ROOMT * conf.ne * (prot.eh - conf.em0) * PH2KCAL/58.0
+            Eself = conf.vdw0 + conf.vdw1 + conf.epol + conf.tors + conf.dsolv + conf.extra + E_ph + E_eh + conf.entropy
+            prot.head3list[ic].E_self = Eself
+
+            # to do: mfe from fixed conformer
+            mfe = 0.0
+            for jc in self.fixed_conformers:
+                if (ic, jc) in prot.pairwise:
+                   mfe += prot.pairwise[(ic, jc)] * prot.head3list[jc].fixed_occ
+            prot.head3list[ic].E_self_mfe = prot.head3list[ic].E_self + mfe 
+
+        return
+
+    def randomize_state(self):
+        state = []
+        for res in self.free_residues:
+            if len(res) < 2:
+                print("   Error: Randomize a residue with less than 2 conformers")
+                sys.exit()
+            state.append(res[random.randrange(len(res))])
+        return state
+
+    def make_biglist(self, prot):
+        biglist = [[] for i in range(len(self.free_residues))]
+        for ir in range(len(self.free_residues)):
+            for jr in range(ir+1, len(self.free_residues)):
+                next_jr = False
+                for ic in self.free_residues[ir]:
+                    if next_jr:
+                        break
+                    for jc in self.free_residues[jr]:
+                        if next_jr:
+                            break
+                        if (ic, jc) in prot.pairwise:
+                            pw = prot.pairwise[(ic, jc)]
+                        else:
+                            pw = 0.0
+                        if abs(pw) > env.var["BIG_PAIRWISE"]:
+                            biglist[ir].append(jr)
+                            biglist[jr].append(ir)
+                            next_jr = True
+        return biglist
+
+
+    def get_E(self, prot):
+        self.complete_state = self.fixed_conformers + self.state
+        # This function requires a complete state and supports partial occupancy
+        E_state = 0.0
+        for ic in self.complete_state:
+            if ic in self.fixed_conformers:
+                self.E_state += prot.head3list[ic].E_self * prot.head3list[ic].fixed_occ
+            else:
+                self.E_state += prot.head3list[ic].E_self
+
+        # To support partial occ, multiply fixed_occ for fixed conformers
+        for i in range(len(self.complete_state) - 1):
+            for j in range(i+1, len(self.complete_state)):
+                ic = self.complete_state[i]
+                jc = self.complete_state[j]
+                pair = (ic, jc)
+                #print pair, prot.pairwise[pair]
+                if pair in prot.pairwise:
+                    pw_energy = prot.pairwise[pair]
+                    if ic in self.fixed_conformers:
+                        pw_energy *= prot.head3list[ic].fixed_occ
+                    if jc in self.fixed_conformers:
+                        pw_energy *= prot.head3list[jc].fixed_occ
+                    E_state += pw_energy
+
+        return E_state
+
+
+    def verify_free(self):
+        for x in self.free_residues:
+            if len(x) < 2:
+                print("   ERROR: Free residues can not have less than 2 flippable conformers.")
+                sys.exit()
+        return
+
+
+def mc_run(prot, state, N, record = False):
+    """Monte Carlo sampling core function. It starts from a state, sample N times."""
+
+    global mc_log
+    global ms_dat
+
+    state.verify_free()
+
+    if "MONTE_WRITESTATE" in env.var and env.var["MONTE_WRITESTATE"].upper() == "T":
+        write_ms = True
+    else:
+        write_ms = False
+
+    b = -KCAL2KT/(env.var["MONTE_T"]/ROOMT)
+    n_free = len(state.free_residues)
+    nflips = env.var["MONTE_FLIPS"]
+
+    E_minimum = E_state = state.get_E(prot)
+
+    # Trace cycles
+    if env.var["MONTE_TRACE"] > 0:
+        cycles = int((N - 1)/env.var["MONTE_TRACE"]) + 1    # minimum 1
+        n_total = cycles * env.var["MONTE_TRACE"]
+        n_cycle = env.var["MONTE_TRACE"]
+    else:
+        cycles = 1
+        n_total = n_cycle = N
+
+    # clear counters
+    for conf in prot.head3list:
+        conf.counter = 0
+    H_average = 0.0
+
+    for i in range(cycles):
+        mc_log.write("Step %10d, E_minimum = %10.2f, E_running = %10.2f\n" % (i * n_cycle, E_minimum, E_state))
+        mc_log.flush()
+
+        iters = n_cycle
+        while iters:
+            # save the state
+            old_state = deepcopy(state.state)
+
+            # 1st flip
+            ires = random.randrange(n_free)
+            while True:
+                new_conf = random.choice(state.free_residues[ires])
+                if new_conf != state.state[ires]:
+                    break
+
+            old_conf = state.state[ires]
+            state.state[ires] = new_conf
+            dE = prot.head3list[new_conf].E_self_mfe - prot.head3list[old_conf].E_self_mfe
+            for j in range(n_free):
+                if (new_conf, state.state[j]) in prot.pairwise:
+                    dE += prot.pairwise[(new_conf, state.state[j])]
+                if (old_conf, state.state[j]) in prot.pairwise:
+                    dE -= prot.pairwise[(old_conf, state.state[j])]
+
+            if random.choice([True, False]):
+                if state.biglist[ires]:
+                    for k in range(nflips):
+                        iflip = random.choice(state.biglist[ires]) # which residue to flip
+                        old_conf = state.state[iflip]
+                        new_conf = random.choice(state.free_residues[iflip])   # conformer flip to
+                        state.state[iflip] = new_conf
+                        #print("iflip=%d from biglist=%s ")
+
+                        dE += prot.head3list[new_conf].E_self_mfe - prot.head3list[old_conf].E_self_mfe
+                        for j in range(n_free):
+                            if (new_conf, state.state[j]) in prot.pairwise:
+                                dE += prot.pairwise[(new_conf, state.state[j])]
+                            if (old_conf, state.state[j]) in prot.pairwise:
+                                dE -= prot.pairwise[(old_conf, state.state[j])]
+
+            if dE < 0.0:
+                flip = True
+            elif random.random() < math.exp(b*dE):
+                flip = True
+            else:
+                flip = False
+
+            if flip:    # update energy
+                E_state += dE
+                if E_minimum > E_state:
+                    E_minimum = E_state
+            else:       # go back to old state
+                state.state = deepcopy(old_state)
+
+            #print("Flip = %d, dE = %.2f, E_state = %.2f" % (flip, dE, E_state))
+            #print(old_state)
+            #print(state.state)
+            H_average += E_state
+            iters -= 1
+
+    mc_log.write("Exit %10d, E_minimum = %10.2f, E_running = %10.2f\n" % (n_total, E_minimum, E_state))
+    mc_log.write("The average running energy, corresponding to H, is %8.3f\n" % (H_average/n_total))
+    mc_log.flush()
+    return
 
 
 
-def randomize_state(free_res):
-    state = []
-    for res in free_res:
-        if len(res) < 2:
-            print("   Error: Randomize a residue with less than 2 conformers")
-            sys.exit()
-
-        state.append(res[random.randrange(len(res))])
-    return state
-
-
-def get_E(complete_state, prot):
-    # This function requires a complete state and supports partial occupancy
-    E_state = 0.0
-    for ic in complete_state:
-        if ic in prot.fixed_conformers:
-            E_state += prot.self_energy[ic] * prot.head3list[ic].fixed_occ
-        else:
-            E_state += prot.self_energy[ic]
-
-    # To support partial occ, multiply fixed_occ for fixed conformers
-    for i in range(len(complete_state) - 1):
-        for j in range(i+1, len(complete_state)):
-            ic = complete_state[i]
-            jc = complete_state[j]
-            pair = (ic, jc)
-            #print pair, prot.pairwise[pair]
-            if pair in prot.pairwise:
-                pw_energy = prot.pairwise[pair]
-                if ic in prot.fixed_conformers_running:
-                    pw_energy *= prot.head3list[ic].fixed_occ
-                if jc in prot.fixed_conformers_running:
-                    pw_energy *= prot.head3list[jc].fixed_occ
-                E_state += pw_energy
-
-    return E_state
 
 
 def monte():
     """ Monte Carlo sampling """
+    global mc_log
 
     timerA = time.time()
 
@@ -404,6 +565,7 @@ def monte():
     prot = Protein()
     prot.load_energy()
     prot.group_to_residues()
+    prot.monte_t = env.var["MONTE_T"]
 
     titration_type = env.var["TITR_TYPE"].upper()
     init_ph = env.var["TITR_PH0"]
@@ -411,32 +573,42 @@ def monte():
     init_eh = env.var["TITR_EH0"]
     step_eh = env.var["TITR_EHD"]
     steps = env.var["TITR_STEPS"]
-    detail_log = open("mc.out", "w")
+    mc_log = open("mc.out", "w")
 
     timerB = time.time()
     print("   Done setting up MC in %1d seconds.\n" % (timerB - timerA))
 
     for i in range(steps):
+        # Set up pH and eh environment
         if titration_type == "PH":
-            ph = init_ph + i * step_ph
-            eh = init_eh
+            prot.ph = init_ph + i * step_ph
+            prot.eh = init_eh
         elif titration_type == "EH":
-            ph = init_ph
-            eh = init_eh + i * step_eh
+            prot.ph = init_ph
+            prot.eh = init_eh + i * step_eh
         else:
             print("   Error: Titration type is %s. It has to be ph or eh in line (TITR_TYPE) in run.prm" % titration_type)
             sys.exit()
-        prot.make_running_copy()
 
-        print("      Titration at ph = %5.2f and eh = %.0f mv." % (ph, eh))
+
+#        print(state.fixed_conformers)
+#        print(state.free_residues)
+#        print(state.state)
+#        print("State energy = %.2f" % E_state)
+
+        print("      Titration at ph = %5.2f and eh = %.0f mv." % (prot.ph, prot.eh))
+        mc_log.write("Titration at ph = %5.2f and eh = %.0f mv.\n" % (prot.ph, prot.eh))
         # Gnerate a microstate in size of prot.free_residues_running[]
-        state = randomize_state(prot.free_residues_running)
-        #complete_state = prot.fixed_conformers_running + state
-        #complete_state.sort()
+        state = MicroState(prot)
+        state.update_self_energy(prot)
+        
+        for j_runs in range(env.var["MONTE_RUNS"]):
+            # independent runs
 
+            N = env.var["MONTE_NITER"]*len(prot.head3list)
+            mc_run(prot, state, N, record=True)
 
-
-    detail_log.close()
+    mc_log.close()
     timerB = time.time()
     print("Total time on MC: %1d seconds.\n" % (timerB - timerA))
     return
