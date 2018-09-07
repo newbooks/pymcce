@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pyhon
 import sys
 import time
 import os.path
@@ -161,8 +161,8 @@ class Conformer:
         self.E_self_mfe = 0.0 # self energy including pairwise contribution from fixed residues
         self.fixed_occ = 0.0 # a copy of occ whose conformation is fixed.
         self.counter = 0    # MC counters
-        self.acc_counter = 0 # MC accumulative counters
-        self.mc_occ = 0.0   # MC calculated occ
+        self.mc_occ = []   # MC calculated occ
+        self.acc_occ = []   # a list of past mc_occ until rest, history is needed for test convergence
         return
 
     def printme(self):
@@ -374,12 +374,12 @@ class MicroState:
             Eself = conf.vdw0 + conf.vdw1 + conf.epol + conf.tors + conf.dsolv + conf.extra + E_ph + E_eh + conf.entropy
             prot.head3list[ic].E_self = Eself
 
-            # to do: mfe from fixed conformer
+            # mfe from fixed conformer
             mfe = 0.0
             for jc in self.fixed_conformers:
                 if (ic, jc) in prot.pairwise:
-                   mfe += prot.pairwise[(ic, jc)] * prot.head3list[jc].fixed_occ
-            prot.head3list[ic].E_self_mfe = prot.head3list[ic].E_self + mfe 
+                    mfe += prot.pairwise[(ic, jc)] * prot.head3list[jc].fixed_occ
+            prot.head3list[ic].E_self_mfe = prot.head3list[ic].E_self + mfe
 
         return
 
@@ -420,9 +420,9 @@ class MicroState:
         E_state = 0.0
         for ic in self.complete_state:
             if ic in self.fixed_conformers:
-                self.E_state += prot.head3list[ic].E_self * prot.head3list[ic].fixed_occ
+                E_state += prot.head3list[ic].E_self * prot.head3list[ic].fixed_occ
             else:
-                self.E_state += prot.head3list[ic].E_self
+                E_state += prot.head3list[ic].E_self
 
         # To support partial occ, multiply fixed_occ for fixed conformers
         for i in range(len(self.complete_state) - 1):
@@ -450,7 +450,7 @@ class MicroState:
         return
 
 
-def mc_run(prot, state, N, record = False):
+def mc_run(prot, state, N, record=False):
     """Monte Carlo sampling core function. It starts from a state, sample N times."""
 
     global mc_log
@@ -483,6 +483,12 @@ def mc_run(prot, state, N, record = False):
         conf.counter = 0
     H_average = 0.0
 
+
+    # clear counters
+    for res_confs in state.free_residues:
+        for ic in res_confs:
+            prot.head3list[ic].counter = 0
+
     for i in range(cycles):
         mc_log.write("Step %10d, E_minimum = %10.2f, E_running = %10.2f\n" % (i * n_cycle, E_minimum, E_state))
         mc_log.flush()
@@ -490,7 +496,7 @@ def mc_run(prot, state, N, record = False):
         iters = n_cycle
         while iters:
             # save the state
-            old_state = deepcopy(state.state)
+            old_state = [x for x in state.state]
 
             # 1st flip
             ires = random.randrange(n_free)
@@ -536,19 +542,27 @@ def mc_run(prot, state, N, record = False):
                 if E_minimum > E_state:
                     E_minimum = E_state
             else:       # go back to old state
-                state.state = deepcopy(old_state)
+                state.state = [x for x in old_state]
 
-            #print("Flip = %d, dE = %.2f, E_state = %.2f" % (flip, dE, E_state))
-            #print(old_state)
-            #print(state.state)
+            if record:   # record this to conformer stat
+                for ic in state.state:
+                    prot.head3list[ic].counter += 1
+
             H_average += E_state
             iters -= 1
+
+    # find mc_occ
+    if record:
+        for res_confs in state.free_residues:
+            for ic in res_confs:
+                prot.head3list[ic].mc_occ = float(prot.head3list[ic].counter)/n_total
+                prot.head3list[ic].acc_occ.append(prot.head3list[ic].mc_occ)
+
 
     mc_log.write("Exit %10d, E_minimum = %10.2f, E_running = %10.2f\n" % (n_total, E_minimum, E_state))
     mc_log.write("The average running energy, corresponding to H, is %8.3f\n" % (H_average/n_total))
     mc_log.flush()
     return
-
 
 
 
@@ -578,7 +592,8 @@ def monte():
     timerB = time.time()
     print("   Done setting up MC in %1d seconds.\n" % (timerB - timerA))
 
-    for i in range(steps):
+#    for i in range(steps):
+    for i in range(1):
         # Set up pH and eh environment
         if titration_type == "PH":
             prot.ph = init_ph + i * step_ph
@@ -590,21 +605,25 @@ def monte():
             print("   Error: Titration type is %s. It has to be ph or eh in line (TITR_TYPE) in run.prm" % titration_type)
             sys.exit()
 
-
-#        print(state.fixed_conformers)
-#        print(state.free_residues)
-#        print(state.state)
-#        print("State energy = %.2f" % E_state)
-
         print("      Titration at ph = %5.2f and eh = %.0f mv." % (prot.ph, prot.eh))
         mc_log.write("Titration at ph = %5.2f and eh = %.0f mv.\n" % (prot.ph, prot.eh))
         # Gnerate a microstate in size of prot.free_residues_running[]
         state = MicroState(prot)
         state.update_self_energy(prot)
-        
+
         for j_runs in range(env.var["MONTE_RUNS"]):
             # independent runs
 
+            # Reset mc_occ list
+            for ic in range(len(prot.head3list)):
+                prot.head3list[ic].acc_occ = []
+
+            # Annealing
+            # Reduction
+            # Entropy sampling
+            # Sampling
+
+            
             N = env.var["MONTE_NITER"]*len(prot.head3list)
             mc_run(prot, state, N, record=True)
 

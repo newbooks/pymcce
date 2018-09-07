@@ -17,9 +17,9 @@ Input and Output:
 prot.pdb                                                    (INPDB)
 
 Steps:
-t        step 1: pre-run, pdb-> mcce pdb                    (DO_PREMCCE)
-t        step 2: make rotatmers                             (DO_ROTAMERS)
-t        step 3: do energy calculations                     (DO_ENERGY)
+f        step 1: pre-run, pdb-> mcce pdb                    (DO_PREMCCE)
+f        step 2: make rotatmers                             (DO_ROTAMERS)
+f        step 3: do energy calculations                     (DO_ENERGY)
 t        step 4: monte carlo sampling                       (DO_MONTE)
 ==============================================================================
 
@@ -27,7 +27,7 @@ t        step 4: monte carlo sampling                       (DO_MONTE)
 ==============================================================================
 Less modified entries
 ------------------------------------------------------------------------------
-8.0      Protein dielectric constant for DelPhi             (EPSILON_PROT)
+4.0      Protein dielectric constant for DelPhi             (EPSILON_PROT)
 ./extra.ftpl                          (EXTRA)
 ./name.txt MCCE renaming rule.           (RENAME_RULES)
 
@@ -44,7 +44,7 @@ ph       "ph" for pH titration, "eh" for eh titration       (TITR_TYPE)
 #############################################################################
 MODIFYING FOLLOWING ENTRIES REQUIRE ADVANCED KNOWLEDGE:
 -----------------------------------------------------------------------------
-/home/jmao/mcce2.7                                          (MCCE_HOME)
+/home/jmao/projects/mcce-develop                                          (MCCE_HOME)
 
 Options specific to each step:
 
