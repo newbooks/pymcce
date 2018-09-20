@@ -411,7 +411,7 @@ def monte():
 
     lines = open("states").readlines()
     for line in lines:
-        state = [int(x.strip(",")) for x in line.split()]
+        state = [int(x.strip(",")) for x in line.split(",")]
         E_state = get_E(state, prot)
         print("[%s] E_state=%.4f" % (" ".join(str(x) for x in state), E_state))
 

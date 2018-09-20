@@ -112,7 +112,7 @@ f        Using Yifan's monte carlo                          (MONTE_ADV_OPT)
 2000     Sampling = n_iter * confs                          (MONTE_NITER)
 50000    Trace energy each MONTE_TRACE steps, 0 no trace    (MONTE_TRACE)
 1000000  Maximum microstates for analytical solution        (NSTATE_MAX)
-t        Do entropy correction                              (MONTE_TSX)
+f        Do entropy correction                              (MONTE_TSX)
 t        Write microstate                                   (MONTE_WRITESTATE)
 
 # Advanced options:
