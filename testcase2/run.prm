@@ -20,9 +20,9 @@ Input and Output:
 Steps:
 f        step 1: pre-run, pdb-> mcce pdb                    (DO_PREMCCE)
 f        step 2: make rotatmers                             (DO_ROTAMERS)
-t        step 3: do energy calculations                     (DO_ENERGY)
+f        step 3: do energy calculations                     (DO_ENERGY)
 t        step 4: monte carlo sampling                       (DO_MONTE)
-t        step 5: post monte carlo (pka)                     (DO_POSTMCCE)
+f        step 5: post monte carlo (pka)                     (DO_POSTMCCE)
 f        step 6: analysis                                   (DO_ANALYSIS)
 ==============================================================================
 
@@ -36,7 +36,7 @@ Less modified entries
 ------------------------------------------------------------------------------
 4.0      Protein dielectric constant for DelPhi             (EPSILON_PROT)
 ./extra.tpl                                (EXTRA)
-/home/umeshk/Dropbox/Dropbox/complex1/name.txt    MCCE renaming rule.       (RENAME_RULES)
+./name.txt    MCCE renaming rule.       (RENAME_RULES)
 
 ph       "ph" for pH titration, "eh" for eh titration       (TITR_TYPE)
 7.0      Initial pH                                         (TITR_PH0)
@@ -51,8 +51,8 @@ ph       "ph" for pH titration, "eh" for eh titration       (TITR_TYPE)
 #############################################################################
 MODIFYING FOLLOWING ENTRIES REQUIRE ADVANCED KNOWLEDGE:
 -----------------------------------------------------------------------------
-/home/umeshk/Dropbox/Dropbox/br                                            (MCCE_HOME)
-t       Minimize output files                               (MINIMIZE_SIZE)
+/home/jmao/projects/mcce-develop                                            (MCCE_HOME)
+f       Minimize output files                               (MINIMIZE_SIZE)
 t       Print trace file                                    (DO_TRACE)
 
 Options specific to each step:
@@ -135,7 +135,7 @@ t        Output readable micristate file from standard monte carlo (RE_MS_OUT)
 6        Independent monte carlo sampling                   (MONTE_RUNS)
 10      Sampling = n_iter * confs                          (MONTE_NITER)
 50000    Trace energy each MONTE_TRACE steps, 0 no trace    (MONTE_TRACE)
-0  Maximum microstates for analytical solution        (NSTATE_MAX)
+0000  Maximum microstates for analytical solution        (NSTATE_MAX)
 f        Do entropy correction                              (MONTE_TSX)
 
 

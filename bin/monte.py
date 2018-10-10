@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import sys
-import time
 import os.path
 from copy import deepcopy
 import random
 import math
 import numpy as np
+import itertools
+import time
 
 ROOMT = 298.15
 PH2KCAL = 1.364
@@ -37,7 +38,7 @@ class Env:
         float_values = ["EPSILON_PROT", "TITR_PH0", "TITR_PHD", "TITR_EH0", "TITR_EHD", "CLASH_DISTANCE",
                         "BIG_PAIRWISE", "MONTE_T", "MONTE_REDUCE"]
         int_values = ["TITR_STEPS", "MONTE_RUNS", "MONTE_TRACE", "MONTE_NITER", "MONTE_NEQ",
-                      "MONTE_NSTART", "MONTE_FLIPS"]
+                      "MONTE_NSTART", "MONTE_FLIPS", "NSTATE_MAX"]
         if key in float_values:
             self.var[key] = float(value)
         elif key in int_values:
@@ -157,6 +158,7 @@ class Conformer:
         self.history = fields[15]
         # from MC entropy sampling
         self.entropy = 0.0  # -TS, will be calculated at entropy sampling
+        self.acc_entropy = []
         # needed by MC process
         self.E_self = 0.0  # self energy in head3.lst
         self.E_self_mfe = 0.0  # self energy including pairwise contribution from fixed residues
@@ -167,17 +169,23 @@ class Conformer:
         return
 
     def printme(self):
-        print("%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" % (self.iConf,
-                                                                                                   self.confname,
-                                                                                                   self.flag, self.occ,
-                                                                                                   self.crg,
-                                                                                                   self.em0, self.pk0,
-                                                                                                   self.ne, self.nh,
-                                                                                                   self.vdw0, self.vdw1,
-                                                                                                   self.tors, self.epol,
-                                                                                                   self.dsolv,
-                                                                                                   self.extra,
-                                                                                                   self.history))
+        print("%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" % (self.iConf,
+                                                                                                         self.confname,
+                                                                                                         self.flag,
+                                                                                                         self.occ,
+                                                                                                         self.crg,
+                                                                                                         self.em0,
+                                                                                                         self.pk0,
+                                                                                                         self.ne,
+                                                                                                         self.nh,
+                                                                                                         self.vdw0,
+                                                                                                         self.vdw1,
+                                                                                                         self.tors,
+                                                                                                         self.epol,
+                                                                                                         self.dsolv,
+                                                                                                         self.extra,
+                                                                                                         self.entropy,
+                                                                                                         self.history))
 
 
 class Protein:
@@ -236,11 +244,9 @@ class Protein:
             c += 1
         return
 
-    def print_entropy(self):
-        c = 0
+    def store_entropy(self):
         for conf in self.head3list:
-            mc_log.write("   %05d %s mc_occ = %4.2f TS = %5.2f\n" % (c, conf.confname, conf.mc_occ, conf.entropy))
-            c += 1
+            conf.acc_entropy.append(conf.entropy)
         return
 
 
@@ -301,7 +307,7 @@ class Protein:
         # the rest conformers will be set to "t 0.00", and this residue is "fixed"
         # else if total occ of "t" flagged conformers is 0:
         # if only one conformer is left:
-        #        the lone conformer is set to "t 1.00", and this conformer and this residue will be "fixed"
+        # the lone conformer is set to "t 1.00", and this conformer and this residue will be "fixed"
         #    else:
         #        this residue is "free" and occ of conformers is 0.
         # otherwise:
@@ -366,9 +372,9 @@ class Protein:
                 print("   Exiting ...")
                 sys.exit()
 
-#        print(self.fixed_conformers)
-#        for x in self.free_residues:
-#            print x
+            #        print(self.fixed_conformers)
+            #        for x in self.free_residues:
+            #            print x
 
         return
 
@@ -425,9 +431,9 @@ class Protein:
                 print("   Exiting ...")
                 sys.exit()
 
-#        print(self.fixed_conformers)
-#        for x in self.free_residues:
-#            print x
+                # print(self.fixed_conformers)
+            #        for x in self.free_residues:
+            #            print x
 
         return
 
@@ -452,7 +458,9 @@ def get_entropy(prot):
             sum = 0.0
             confs = typeids[typeid]
 
+            # print("===")
             for ic in confs:
+                #print("%d %s" % (ic, prot.head3lst[ic].confname))
                 if prot.head3list[ic].on:
                     sum += prot.head3list[ic].mc_occ
                 else:
@@ -466,10 +474,8 @@ def get_entropy(prot):
                     prot.head3list[ic].entropy = 0.0
             else:
                 for ic in confs:
-                    p = prot.head3list[ic].mc_occ/sum
-                    if p < 1.0E-6:
-                        TS = 0.0
-                    else:
+                    p = prot.head3list[ic].mc_occ / sum
+                    if p > 1.0E-6:
                         TS -= p * math.log(p) / 1.688
 
                 for ic in confs:
@@ -478,8 +484,6 @@ def get_entropy(prot):
                     prot.head3list[ic].entropy = TS
 
     return max_dTS
-
-
 
 
 class MicroState:
@@ -500,7 +504,7 @@ class MicroState:
             E_ph = monte_temp / ROOMT * conf.nh * (prot.ph - conf.pk0) * PH2KCAL
             E_eh = monte_temp / ROOMT * conf.ne * (prot.eh - conf.em0) * PH2KCAL / 58.0
             Eself = conf.vdw0 + conf.vdw1 + conf.epol + conf.tors + conf.dsolv + conf.extra + E_ph + E_eh + \
-                    conf.entropy # entropy term is an artificial "correction", thus add
+                    conf.entropy  # entropy term is an artificial "correction", thus add
             prot.head3list[ic].E_self = Eself
 
             # mfe from fixed conformer
@@ -596,7 +600,6 @@ def mc_complete_sampling(prot):
         mc_run(prot, state, N, T=env.var["MONTE_T"] + (9 - i) * 100.0)
     # Run extended time at the lowest temperature
     mc_run(prot, state, N + 1000, T=env.var["MONTE_T"])
-
     # Reduction
     mc_log.write("Doing reduction:\n")
     N = env.var["MONTE_NEQ"] * (len(prot.head3list) - len(prot.fixed_conformers))
@@ -606,48 +609,117 @@ def mc_complete_sampling(prot):
             if prot.head3list[ic].mc_occ < env.var["MONTE_REDUCE"]:
                 prot.head3list[ic].on = False
                 prot.head3list[ic].occ = 0.0
-
     prot.group_conformers()
     state = MicroState(prot)
     state.update_self_energy(prot)
     state.biglist = state.make_biglist(prot)
-
     # Entropy sampling
     # Use the last reduction run to estimate entropy
-    get_entropy(prot)
-    state.update_self_energy(prot)
-
-    # Throw away runs because a new random state was created
-    N = env.var["MONTE_NEQ"] * (len(prot.head3list) - len(prot.fixed_conformers))
-    mc_run(prot, state, N, T=env.var["MONTE_T"])
-
-    early_break = False
-    for i in range(6):
-        mc_log.write("Doing entropy sampling...\n")
-        mc_run(prot, state, N, T=env.var["MONTE_T"], record=True)
-        max_dTS = get_entropy(prot)
+    if env.var["MONTE_TSX"].upper() == "T":
+        print("Doing entropy correction")
+        get_entropy(prot)
         state.update_self_energy(prot)
+        # Throw away runs because a new random state was created
+        N = env.var["MONTE_NEQ"] * (len(prot.head3list) - len(prot.fixed_conformers))
+        mc_run(prot, state, N, T=env.var["MONTE_T"])
+        early_break = False
+        for i in range(6):
+            mc_log.write("Doing entropy sampling...\n")
+            mc_run(prot, state, N, T=env.var["MONTE_T"], record=True)
+            max_dTS = get_entropy(prot)
+            state.update_self_energy(prot)
+            mc_log.write("   Maximum entropy difference = %.2f\n" % max_dTS)
+            if max_dTS <= 0.2:
+                early_break = True
+                break
+        if early_break:
+            mc_log.write("   End entropy sampling\n")
+        else:
+            mc_log.write("   Entropy correction didn't converge within 6 time.\n")
 
-        # prot.print_entropy()
-        mc_log.write("   Maximum entropy difference = %.2f\n" % max_dTS)
-        if max_dTS <= 0.5:
-            early_break = True
-            break
-
-    if early_break:
-        mc_log.write("   End entropy sampling\n")
-    else:
-        mc_log.write("   Entropy correction didn't converge within 6 time.\n")
-
-    prot.print_entropy()
 
     # Sampling
     mc_log.write("Doing sampling:\n")
-    N = env.var["MONTE_NITER"] * (len(prot.head3list) - len(prot.fixed_conformers))
-    mc_run(prot, state, N, record=True)
+
+
+    # Test analytical
+    nstate = 1
+    for res in prot.free_residues:
+        nstate *= len(res)
+
+    if nstate > env.var["NSTATE_MAX"]:
+        N = env.var["MONTE_NITER"] * (len(prot.head3list) - len(prot.fixed_conformers))
+        # debug
+        for conf in prot.head3list:
+            print("%s %s %4.2f %7.3f   %8.3f" % (conf.confname,
+                                                 conf.on, conf.occ,
+                                                 conf.E_self,
+                                                 conf.E_self_mfe))
+
+        mc_run(prot, state, N, record=True)
+
+    else:  # analytical solution
+        b = -KCAL2KT/(env.var["MONTE_T"]/ROOMT)
+        mc_log.write("Doing analytical solution because states %d < threshhold %d\n" % (nstate, env.var["NSTATE_MAX"]))
+        analytical_states = list(itertools.product(*prot.free_residues))
+        analytical_energies = np.zeros(len(analytical_states))
+
+        old_state = state.state = list(analytical_states[0])
+        E_min = E_state = analytical_energies[0] = state.get_E(prot)
+
+        for i in range(1, len(analytical_states)):
+            new_state = analytical_states[i]
+            dE = 0.0
+            for ires in range(len(new_state)):
+                if old_state[ires] != new_state[ires]:
+                    dE += delta_E(state, prot, old_state[ires], new_state[ires])
+                    old_state[ires] = new_state[ires]
+
+            E_state += dE
+            analytical_energies[i] = E_state
+            if E_min > E_state:
+                E_min = E_state
+
+            if not (i % 10000):
+                E_scratch = state.get_E(prot)
+                print("From dE: %.3f, From scratch: %.3f" % (E_state, E_scratch))
+
+        timeA = time.time()
+        tared_Es = analytical_energies - E_min
+        occ_states = np.fromiter([math.exp(b*x) for x in tared_Es], float)
+        tot_occ = np.sum(occ_states)
+        occ_norm = occ_states / tot_occ
+
+        # reset occ to 0
+        for conf in prot.head3list:
+            conf.mc_occ = 0.0
+
+        for istate in range(len(analytical_states)):
+            for ic in analytical_states[istate]:
+                prot.head3list[ic].mc_occ += occ_norm[istate]
+
+        timeB = time.time()
+        print("Time elapesd in energy to occ conversion: %d" % (timeB - timeA))
+
 
     for conf in prot.head3list:
-        conf.acc_occ.append(conf.mc_occ)
+        if conf.on:
+            conf.acc_occ.append(conf.mc_occ)
+        else:
+            conf.acc_occ.append(conf.occ)
+
+    return
+
+
+def delta_E(state, prot, old_conf, new_conf):
+    dE = prot.head3list[new_conf].E_self_mfe - prot.head3list[old_conf].E_self_mfe
+    n_free = len(state.state)
+    for j in range(n_free):
+        if (new_conf, state.state[j]) in prot.pairwise:
+            dE += prot.pairwise[(new_conf, state.state[j])]
+        if (old_conf, state.state[j]) in prot.pairwise:
+            dE -= prot.pairwise[(old_conf, state.state[j])]
+    return dE
 
 
 def mc_run(prot, state, N, T=ROOMT, record=False):
@@ -757,7 +829,6 @@ def mc_run(prot, state, N, T=ROOMT, record=False):
             for ic in res_confs:
                 prot.head3list[ic].mc_occ = float(prot.head3list[ic].counter) / n_total
 
-
     state.complete_state = state.state + state.fixed_conformers
     state.complete_state.sort()
     state_str = ",".join(["%d" % x for x in state.complete_state])
@@ -807,12 +878,12 @@ def monte():
             points.append(prot.eh)
         else:
             print(
-            "   Error: Titration type is %s. It has to be ph or eh in line (TITR_TYPE) in run.prm" % titration_type)
+                "   Error: Titration type is %s. It has to be ph or eh in line (TITR_TYPE) in run.prm" % titration_type)
             sys.exit()
 
         print("      Titration at ph = %5.2f and eh = %.0f mv." % (prot.ph, prot.eh))
         mc_log.write("Titration at ph = %5.2f and eh = %.0f mv.\n" % (prot.ph, prot.eh))
-        # Gnerate a microstate in size of prot.free_residues_running[]
+        # Generate a microstate in size of prot.free_residues_running[]
 
 
         # Reset mc_occ accumulated list
@@ -822,6 +893,10 @@ def monte():
         for j_runs in range(env.var["MONTE_RUNS"]):
             # independent runs
             mc_complete_sampling(prot)
+
+        # record entropy of the last run
+        prot.store_entropy()
+
 
         mc_log.write("Standard deviation in independent runs:\n")
         max_std = 0.0
@@ -840,21 +915,26 @@ def monte():
 
 
 
-    # print fort.38
+    # print fort.38 and entropy.out
     lines = []
+    lines_entropy = []
     if titration_type.upper == "PH":
         points_str = " ".join(["%5.3f" % x for x in points])
     else:
         points_str = " ".join(["%5.f" % x for x in points])
     lines.append("        %s     %s\n" % (titration_type, points_str))
+    lines_entropy.append("        %s     %s\n" % (titration_type, points_str))
 
     for conf in prot.head3list:
         occ_str = " ".join(["%5.3f" % x for x in conf.occ_at_points])
         line = "%s %s\n" % (conf.confname, occ_str)
         lines.append(line)
+        occ_str = " ".join(["%5.3f" % x for x in conf.acc_entropy])
+        line = "%s %s\n" % (conf.confname, occ_str)
+        lines_entropy.append(line)
 
     open("fort.38", "w").writelines(lines)
-
+    open("entropy.out", "w").writelines(lines_entropy)
 
     mc_log.close()
     timerB = time.time()
