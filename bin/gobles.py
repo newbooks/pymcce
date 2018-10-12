@@ -163,12 +163,14 @@ def load_head3lst():
             sys.exit()
     return conformers
 
+
 def get_pw(ic, jc):
     if (ic, jc) in pairwise:
         value = pairwise[(ic, jc)]
     else:
         value = 0.0
     return value
+
 
 def load_pairwise():
     folder = env.energy_table
@@ -193,7 +195,7 @@ def load_pairwise():
                     continue
                 ele = float(fields[2])
                 vdw = float(fields[3])
-                pairwise[(ic,jc)] = ele * scale_ele + vdw * scale_vdw
+                pairwise[(ic, jc)] = ele * scale_ele + vdw * scale_vdw
 
     # average the opposite sides
     for ic in range(n_conf-1):
