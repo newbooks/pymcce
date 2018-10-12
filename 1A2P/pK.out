@@ -1,0 +1,39 @@
+  pH             pKa/Em  n(slope) 1000*chi2
+NTR+A0003_        8.397     1.003     0.009
+ASP-A0008_        2.700     0.802     0.101
+ASP-A0012_        2.866     0.773     0.333
+TYR-A0013_       12.676     0.726     4.647
+TYR-A0017_       10.025     0.777     0.619
+HIS+A0018_          pKa or Em out of range   
+LYS+A0019_       10.382     0.720     0.715
+ASP-A0022_        2.723     0.980     0.013
+TYR-A0024_          pKa or Em out of range   
+LYS+A0027_       11.067     0.736     2.897
+GLU-A0029_        4.200     1.002     0.212
+LYS+A0039_       10.499     1.002     0.007
+ASP-A0044_        3.580     0.991     0.001
+LYS+A0049_       11.501     0.909     0.044
+ASP-A0054_        1.110     0.828     1.234
+ARG+A0059_       12.682     0.762     0.116
+GLU-A0060_        2.780     0.873     0.280
+LYS+A0062_       12.759     0.760     0.621
+LYS+A0066_       10.343     0.962     0.003
+ARG+A0069_        pKa or Em out of range   
+ARG+A0072_        pKa or Em out of range   
+GLU-A0073_        2.542     0.702     2.102
+ASP-A0075_        pKa or Em out of range   
+TYR-A0078_       12.962     0.869     0.002
+ARG+A0083_        pKa or Em out of range   
+ASP-A0086_        4.192     1.168     1.126
+ARG+A0087_          pKa or Em out of range   
+TYR-A0090_       12.184     0.608     1.955
+ASP-A0093_        1.297     0.921     0.064
+TYR-A0097_       10.888     0.649     1.718
+LYS+A0098_       10.568     0.923     0.021
+ASP-A0101_        1.605     0.935     0.089
+HIS+A0102_        6.822     1.002     0.251
+TYR-A0103_       12.882     0.640     5.631
+LYS+A0108_       11.542     0.689     1.221
+ARG+A0110_        pKa or Em out of range   
+CTR-A0110_        2.141     0.804     0.112
+_ZN+A0112_          pKa or Em out of range   
