@@ -31,13 +31,13 @@ ASP-A0093_ -1.00
 TYR-A0097_ -0.00
 LYS+A0098_  1.00
 ASP-A0101_ -1.00
-HIS+A0102_  0.25
+HIS+A0102_  0.48
 TYR-A0103_ -0.00
 LYS+A0108_  1.00
 ARG+A0110_  1.00
 CTR-A0110_ -1.00
 _ZN+A0112_  0.00
 ----------
-Net_Charge  2.21
-Protons     2.21
+Net_Charge  2.44
+Protons     2.44
 Electrons   0.00

@@ -4,11 +4,10 @@ Global Optimization by Local Equilibrium Sampling
 """
 import sys
 import os.path
-#import numpy as np
+import numpy as np
 
 ROOMT = 298.15
 PH2KCAL = 1.364
-pairwise = {}
 
 float_values = ["(EPSILON_PROT)", "(TITR_PH0)", "(TITR_PHD)", "(TITR_EH0)", "(TITR_EHD)", "EXTRA", "SCALING"]
 int_values = ["(TITR_STEPS)"]
@@ -141,6 +140,135 @@ class Head3lst:
                                                                                                    self.history))
 
 
+class Cluster:
+    def __init__(self):
+        self.residues = []
+        self.pw = [[]]  # just a place holder of a 2D array
+        self.accessible_states = []  # accessible microstates
+        self.E_ambient = 0.0  # energy from everything other than pairwise
+        self.E_cluster = 0.0  # cluster ensemble energy
+        return
+
+
+class Residue:
+    def __init__(self, id):
+        self.resid = id
+        self.conformers = []
+        self.fixed_conformers = []
+        self.free_conformers = []
+        self.groups = []
+        return
+
+    def verify_flags(self):
+        socc = 0.0
+        n_freeconf = len(self.conformers)
+        for conf in self.conformers:
+            if not conf.on:
+                socc += conf.occ
+                n_freeconf -= 1
+            elif abs(conf.occ) > 0.001:  # free residue has non-0 occ
+                print("      %s %c %4.2f -> %s f  0.00 (free conformer initial occ = 0)" % (
+                    conf.confname,
+                    conf.flag,
+                    conf.occ, conf.confname))
+                conf.occ = 0.0
+        if abs(socc - 1.0) < 0.001:  # total occ of fixed conformers are 1.0, all fixed
+            for conf in self.conformers:
+                if conf.on:
+                    print("      %s %c %4.2f -> %s t  0.00 (fixed conformers already have occ 1.0)" % (
+                        conf.confname,
+                        conf.flag, conf.occ, conf.confname))
+                    conf.occ = 0.0
+                    conf.on = False
+                    conf.flag = "t"
+                self.fixed_conformers.append(conf)
+        elif abs(socc) < 0.001:  # total occ is 0
+            if n_freeconf == 1:  # The only free conformer will be rest to t 1.0
+                for conf in self.conformers:
+                    if conf.on:
+                        print("      %s %c %4.2f -> %s t  1.00 (single free conformer of the residue)" % (conf.confname,
+                                                                                                     conf.flag,
+                                                                                                     conf.occ,
+                                                                                                     conf.confname))
+                        conf.on = False
+                        conf.occ = 1.0
+                        conf.flag = "t"
+                        self.fixed_conformers.append(conf)
+                    else:
+                        self.fixed_conformers.append(conf)  # The rest are fixed at 0
+            else:
+                for conf in self.conformers:
+                    if not conf.on:
+                        self.fixed_conformers.append(conf)
+                    else:
+                        self.free_conformers.append(conf)
+        else:  # total occ is neither 0 or 1
+            print("   Error: Total residue occupancy is %.2f, 0.00 or 1.00 expected." % socc)
+            for conf in self.conformers:
+                conf.printme()
+            print("   Exiting ...")
+            sys.exit()
+
+        return
+
+
+class Typegroup:
+    def __init__(self):
+        self.conformers = []
+        self.entropy = 0.0
+        return
+
+
+class Conformer:
+    def __init__(self, ic):
+        self.i = 0  # index number to head3.lst, needed to load energy terms
+        self.flag = ""
+        self.on = True  # True means to be sampled, False means fixed at occ
+        self.occ = 0.0
+        self.E_self = 0.0
+        self.load(ic)
+        return
+
+    def load(self, ic):
+        self.i = ic
+        self.confname = head3lst[ic].confname
+        self.flag = head3lst[ic].flag
+        if head3lst[ic].flag.upper() == "T":
+            self.on = False
+            self.occ = head3lst[ic].occ
+        else:
+            self.on = True
+            self.occ = 0.0
+        return
+
+    def printme(self):
+        if self.on:
+            flag = "f"
+        else:
+            flag = "t"
+        print("%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" %
+              (head3lst[self.i].iConf,
+               head3lst[self.i].confname,
+               flag,
+               head3lst[self.i].occ,
+               head3lst[self.i].crg,
+               head3lst[self.i].em0,
+               head3lst[self.i].pk0,
+               head3lst[self.i].ne,
+               head3lst[self.i].nh,
+               head3lst[self.i].vdw0,
+               head3lst[self.i].vdw1,
+               head3lst[self.i].tors,
+               head3lst[self.i].epol,
+               head3lst[self.i].dsolv,
+               head3lst[self.i].extra,
+               head3lst[self.i].history))
+        return
+
+    def set_Eself(self, ph, eh):
+        return
+
+
 def load_head3lst():
     conformers = []
     fname = env.fn_conflist3
@@ -179,6 +307,7 @@ def load_pairwise():
     confnames = [x.confname for x in head3lst]
     scale_ele = env.var["SCALING,ELE"]
     scale_vdw = env.var["SCALING,VDW"]
+    pw = np.zeros(shape=(n_conf, n_conf))
     for ic in range(n_conf):
         conf = head3lst[ic]
         oppfile = "%s/%s.opp" % (folder, conf.confname)
@@ -195,20 +324,59 @@ def load_pairwise():
                     continue
                 ele = float(fields[2])
                 vdw = float(fields[3])
-                pairwise[(ic, jc)] = ele * scale_ele + vdw * scale_vdw
+                pw[ic][jc] = ele * scale_ele + vdw * scale_vdw
 
     # average the opposite sides
-    for ic in range(n_conf-1):
-        for jc in range(ic+1, n_conf):
-            #if abs(pw[ic][jc] - pw[jc][ic]) > 0.000001:
-            #    print("%s %.3f <-> %s %.3f" % (confnames[ic], pw[ic][jc], confnames[jc], pw[jc][ic]))
-            averaged_pw = (get_pw(ic, jc) + get_pw(jc, ic)) * 0.5
-            if abs(averaged_pw) > 0.0001:
-                pairwise[(ic, jc)] = pairwise[(jc, ic)] = averaged_pw
-    return
+    for ic in range(n_conf - 1):
+        for jc in range(ic + 1, n_conf):
+            # if abs(pw[ic][jc] - pw[jc][ic]) > 0.000001:
+            # print("%s %.3f <-> %s %.3f" % (confnames[ic], pw[ic][jc], confnames[jc], pw[jc][ic]))
+            averaged_pw = (pw[ic][jc] + pw[jc][ic]) * 0.5
+            pw[ic][jc] = pw[jc][ic] = averaged_pw
+    return pw
+
+
+def group_residues():
+    residue_ids = []
+    confnames = [x.confname for x in head3lst]
+    for confname in confnames:
+        resid = confname[:3] + confname[5:11]
+        if resid not in residue_ids:
+            residue_ids.append(resid)
+
+    residues = [Residue(x) for x in residue_ids]
+    for ic in range(len(confnames)):
+        confname = confnames[ic]
+        resid = confname[:3] + confname[5:11]
+        index = residue_ids.index(resid)
+        conf = Conformer(ic)
+        residues[index].conformers.append(conf)
+
+    print("   Verifying conformers ...")
+    # Verify flags
+    # Group conformers
+    for res in residues:
+        #print(len(res.conformers))
+        res.verify_flags()
+
+        # print(self.fixed_conformers)
+        #        for x in self.free_residues:
+        #            print x
+
+    return residues
+
 
 env = Env()
 head3lst = load_head3lst()
-load_pairwise()
+pairwise = load_pairwise()
+residues = group_residues()
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
+    for res in residues:
+        print("Residue %s" % res.resid)
+        print("Free conformers:")
+        for conf in res.free_conformers:
+            conf.printme()
+        print("Fixed conformers:")
+        for conf in res.fixed_conformers:
+            conf.printme()
