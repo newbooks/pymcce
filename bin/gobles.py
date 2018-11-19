@@ -8,6 +8,8 @@ import numpy as np
 
 ROOMT = 298.15
 PH2KCAL = 1.364
+CLUSTER_PWCUTOFF = 1.0  # include into a cluster if conf-conf pw is bigger than this value
+
 
 float_values = ["(EPSILON_PROT)", "(TITR_PH0)", "(TITR_PHD)", "(TITR_EH0)", "(TITR_EHD)", "EXTRA", "SCALING"]
 int_values = ["(TITR_STEPS)"]
@@ -141,13 +143,38 @@ class Head3lst:
 
 
 class Cluster:
-    def __init__(self):
-        self.residues = []
+    def __init__(self, res):
+        self.residues = self.include_residues(res)
         self.pw = [[]]  # just a place holder of a 2D array
         self.accessible_states = []  # accessible microstates
         self.E_ambient = 0.0  # energy from everything other than pairwise
         self.E_cluster = 0.0  # cluster ensemble energy
         return
+
+    def find_maxpw(self, r1, r2):
+        max = -0.1
+        for conf1 in r1.free_conformers:
+            ic = conf1.i
+            for conf2 in r2.free_conformers:
+                jc = conf2.i
+                pw = abs(pairwise[ic][jc])
+                if max < pw:
+                    max = pw
+        return max
+
+    def include_residues(self, res):
+        includes = [res]
+        for r in residues:
+            if res.resid != r.resid:
+                maxpw = self.find_maxpw(res, r)
+                if maxpw > CLUSTER_PWCUTOFF:
+                    includes.append(r)
+        return includes
+
+    def assign_pw(self):
+        """Find pairwise interactions within the cluster."""
+
+
 
 
 class Residue:
@@ -292,14 +319,6 @@ def load_head3lst():
     return conformers
 
 
-def get_pw(ic, jc):
-    if (ic, jc) in pairwise:
-        value = pairwise[(ic, jc)]
-    else:
-        value = 0.0
-    return value
-
-
 def load_pairwise():
     folder = env.energy_table
     n_conf = len(head3lst)
@@ -366,17 +385,26 @@ def group_residues():
     return residues
 
 
+def group_clusters():
+    cltrs = []
+    print("   Identify clusters, size: residues")
+    for res in residues:
+        if len(res.free_conformers) > 1:
+            cluster = Cluster(res)
+            cltrs.append(cluster)
+
+    for cluster in cltrs:
+        ids = [x.resid for x in cluster.residues]
+        print("      %3d: %s" % (len(ids), ", ".join(ids)))
+
+    return cltrs
+
+
 env = Env()
 head3lst = load_head3lst()
 pairwise = load_pairwise()
 residues = group_residues()
+clusters = group_clusters()
 
 if __name__ == "__main__":
-    for res in residues:
-        print("Residue %s" % res.resid)
-        print("Free conformers:")
-        for conf in res.free_conformers:
-            conf.printme()
-        print("Fixed conformers:")
-        for conf in res.fixed_conformers:
-            conf.printme()
+    pass
