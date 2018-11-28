@@ -145,22 +145,24 @@ class Head3lst:
 class Cluster:
     def __init__(self, res):
         self.residues = self.include_residues(res)
-        self.pw = [[]]  # just a place holder of a 2D array
-        self.accessible_states = []  # accessible microstates
-        self.E_ambient = 0.0  # energy from everything other than pairwise
-        self.E_cluster = 0.0  # cluster ensemble energy
+        self.pw = [[]]  # just a place holder of a 2D array for internal pairwise interactions
+        self.dynamic_accessible_states = []  # accessible microstates
+        self.dynamic_E_ambient = 0.0  # energy of everything other than this cluster
+        self.dynamic_E_cluster = 0.0  # cluster ensemble energy
+        self.dynamic_E_global = 0.0  # global energy = E_ambient + R_global
         return
 
-    def find_maxpw(self, r1, r2):
-        max = -0.1
+    @staticmethod
+    def find_maxpw(r1, r2):
+        maxval = -0.1
         for conf1 in r1.free_conformers:
             ic = conf1.i
             for conf2 in r2.free_conformers:
                 jc = conf2.i
                 pw = abs(pairwise[ic][jc])
-                if max < pw:
-                    max = pw
-        return max
+                if maxval < pw:
+                    maxval = pw
+        return maxval
 
     def include_residues(self, res):
         includes = [res]
@@ -171,9 +173,11 @@ class Cluster:
                     includes.append(r)
         return includes
 
-    def assign_pw(self):
-        """Find pairwise interactions within the cluster."""
+    def init_energy(self):
+        """Load initial self and pairwise interactions within the cluster."""
 
+
+        return
 
 
 
@@ -400,6 +404,13 @@ def group_clusters():
     return cltrs
 
 
+def initialize_clusters(ph, eh):
+    for cluster in clusters:
+        cluster.init_energy()
+
+
+    return
+
 env = Env()
 head3lst = load_head3lst()
 pairwise = load_pairwise()
@@ -407,4 +418,19 @@ residues = group_residues()
 clusters = group_clusters()
 
 if __name__ == "__main__":
-    pass
+    ph_start = env.var["(TITR_PH0)"]
+    ph_step = env.var["(TITR_PHD)"]
+    eh_start = env.var["(TITR_EH0)"]
+    eh_step = env.var["(TITR_EHD)"]
+    titration_type = env.var["(TITR_TYPE)"]
+    titration_steps = env.var["(TITR_STEPS)"]
+
+    for ititr in range(titration_steps):
+        if titration_type == "ph":
+            ph = ph_start + ph_step * ititr
+            eh = eh_start
+        else:
+            ph = ph_start
+            eh = eh_start + eh_step * ititr
+        print ("   Titration at pH = %.1f and Eh = %.f" % (ph, eh))
+        initialize_clusters(ph, eh)
