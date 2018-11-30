@@ -10,7 +10,6 @@ ROOMT = 298.15
 PH2KCAL = 1.364
 CLUSTER_PWCUTOFF = 1.0  # include into a cluster if conf-conf pw is bigger than this value
 
-
 float_values = ["(EPSILON_PROT)", "(TITR_PH0)", "(TITR_PHD)", "(TITR_EH0)", "(TITR_EHD)", "EXTRA", "SCALING"]
 int_values = ["(TITR_STEPS)"]
 
@@ -176,14 +175,12 @@ class Cluster:
     def init_energy(self):
         """Load initial self and pairwise interactions within the cluster."""
 
-
         return
 
 
-
 class Residue:
-    def __init__(self, id):
-        self.resid = id
+    def __init__(self, resid):
+        self.resid = resid
         self.conformers = []
         self.fixed_conformers = []
         self.free_conformers = []
@@ -218,9 +215,9 @@ class Residue:
                 for conf in self.conformers:
                     if conf.on:
                         print("      %s %c %4.2f -> %s t  1.00 (single free conformer of the residue)" % (conf.confname,
-                                                                                                     conf.flag,
-                                                                                                     conf.occ,
-                                                                                                     conf.confname))
+                                                                                                          conf.flag,
+                                                                                                          conf.occ,
+                                                                                                          conf.confname))
                         conf.on = False
                         conf.occ = 1.0
                         conf.flag = "t"
@@ -318,7 +315,7 @@ def load_head3lst():
             sys.exit()
         occurrence = confnames.count(name)
         if occurrence > 1:
-            print("Conformer %s occurred %d times" % occurrence)
+            print("Conformer %s occurred %d times" % (name, occurrence))
             sys.exit()
     return conformers
 
@@ -379,7 +376,7 @@ def group_residues():
     # Verify flags
     # Group conformers
     for res in residues:
-        #print(len(res.conformers))
+        # print(len(res.conformers))
         res.verify_flags()
 
         # print(self.fixed_conformers)
@@ -408,8 +405,8 @@ def initialize_clusters(ph, eh):
     for cluster in clusters:
         cluster.init_energy()
 
-
     return
+
 
 env = Env()
 head3lst = load_head3lst()
