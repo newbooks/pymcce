@@ -10,9 +10,6 @@ ROOMT = 298.15
 PH2KCAL = 1.364
 CLUSTER_PWCUTOFF = 1.0  # include into a cluster if conf-conf pw is bigger than this value
 
-residue_report = "cluster_residues.log"
-
-
 float_values = ["(EPSILON_PROT)", "(TITR_PH0)", "(TITR_PHD)", "(TITR_EH0)", "(TITR_EHD)", "EXTRA", "SCALING"]
 int_values = ["(TITR_STEPS)"]
 
@@ -144,13 +141,53 @@ class Head3lst:
                                                                                                    self.history))
 
 
+class Cluster:
+    def __init__(self, res):
+        self.residues = self.include_residues(res)
+        self.free_residues = []    # free residues
+        self.free_conformers = []  # free conformers
+        self.pw = [[]]  # just a place holder of a 2D array for internal pairwise interactions
+        self.dynamic_accessible_states = []  # accessible microstates
+        self.dynamic_E_ambient = 0.0  # energy of everything other than this cluster
+        self.dynamic_E_cluster = 0.0  # cluster ensemble energy
+        self.dynamic_E_global = 0.0  # global energy = E_ambient + R_global
+        return
+
+    @staticmethod
+    def find_maxpw(r1, r2):
+        maxval = -0.1
+        for conf1 in r1.free_conformers:
+            ic = conf1.i
+            for conf2 in r2.free_conformers:
+                jc = conf2.i
+                pw = abs(pairwise[ic][jc])
+                if maxval < pw:
+                    maxval = pw
+        return maxval
+
+    def include_residues(self, res):
+        includes = [res]
+        for r in residues:
+            if res.resid != r.resid:
+                maxpw = self.find_maxpw(res, r)
+                if maxpw > CLUSTER_PWCUTOFF:
+                    includes.append(r)
+        return includes
+
+    def init_energy(self):
+        """Load initial self and pairwise interactions within the cluster."""
+
+
+        return
+
+
 class Residue:
     def __init__(self, resid):
         self.resid = resid
-        self.neighbors = []
         self.conformers = []
         self.fixed_conformers = []
         self.free_conformers = []
+        self.groups = []
         return
 
     def verify_flags(self):
@@ -162,15 +199,15 @@ class Residue:
                 n_freeconf -= 1
             elif abs(conf.occ) > 0.001:  # free residue has non-0 occ
                 print("      %s %c %4.2f -> %s f  0.00 (free conformer initial occ = 0)" % (
-                    head3lst[conf.i].confname,
+                    conf.confname,
                     conf.flag,
-                    conf.occ, head3lst[conf.i].confname))
+                    conf.occ, conf.confname))
                 conf.occ = 0.0
         if abs(socc - 1.0) < 0.001:  # total occ of fixed conformers are 1.0, all fixed
             for conf in self.conformers:
                 if conf.on:
                     print("      %s %c %4.2f -> %s t  0.00 (fixed conformers already have occ 1.0)" % (
-                        head3lst[conf.i].confname,
+                        conf.confname,
                         conf.flag, conf.occ, conf.confname))
                     conf.occ = 0.0
                     conf.on = False
@@ -180,11 +217,10 @@ class Residue:
             if n_freeconf == 1:  # The only free conformer will be rest to t 1.0
                 for conf in self.conformers:
                     if conf.on:
-                        print("      %s %c %4.2f -> %s t  1.00 (single free conformer of the residue)" % (
-                            head3lst[conf.i].confname,
+                        print("      %s %c %4.2f -> %s t  1.00 (single free conformer of the residue)" % (conf.confname,
                                                                                                           conf.flag,
                                                                                                           conf.occ,
-                                                                                                          head3lst[conf.i].confname))
+                                                                                                          conf.confname))
                         conf.on = False
                         conf.occ = 1.0
                         conf.flag = "t"
@@ -203,43 +239,30 @@ class Residue:
                 conf.printme()
             print("   Exiting ...")
             sys.exit()
+
         return
 
-    def find_neighbors(self):
-        for r in residues:
-            if self.resid != r.resid:
-                maxpw = self.find_maxpw(self, r)
-                if maxpw > CLUSTER_PWCUTOFF:
-                    self.neighbors.append(r)
 
-    @staticmethod
-    def find_maxpw(r1, r2):
-        maxval = -0.1
-        for conf1 in r1.free_conformers:
-            ic = conf1.i
-            for conf2 in r2.free_conformers:
-                jc = conf2.i
-                pw = abs(pairwise[ic][jc])
-                if maxval < pw:
-                    maxval = pw
-        return maxval
-
+class Typegroup:
+    def __init__(self):
+        self.conformers = []
+        self.entropy = 0.0
+        return
 
 
 class Conformer:
     def __init__(self, ic):
-        self.i = ic    # make a link to the head3lst
+        self.i = 0  # index number to head3.lst, needed to load energy terms
         self.flag = ""
         self.on = True  # True means to be sampled, False means fixed at occ
         self.occ = 0.0
-        self.counter = 0
         self.E_self = 0.0
-        self.type = ""
-        self.entropy = 0.0
         self.load(ic)
         return
 
     def load(self, ic):
+        self.i = ic
+        self.confname = head3lst[ic].confname
         self.flag = head3lst[ic].flag
         if head3lst[ic].flag.upper() == "T":
             self.on = False
@@ -254,10 +277,11 @@ class Conformer:
             flag = "f"
         else:
             flag = "t"
-        line = "%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" % (head3lst[self.i].iConf,
+        print("%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" %
+              (head3lst[self.i].iConf,
                head3lst[self.i].confname,
                flag,
-               self.occ,
+               head3lst[self.i].occ,
                head3lst[self.i].crg,
                head3lst[self.i].em0,
                head3lst[self.i].pk0,
@@ -269,8 +293,8 @@ class Conformer:
                head3lst[self.i].epol,
                head3lst[self.i].dsolv,
                head3lst[self.i].extra,
-               head3lst[self.i].history)
-        return line
+               head3lst[self.i].history))
+        return
 
     def set_Eself(self, ph, eh):
         return
@@ -352,47 +376,48 @@ def group_residues():
         residues[index].conformers.append(conf)
 
     print("   Verifying conformers ...")
+    # Verify flags
+    # Group conformers
     for res in residues:
+        # print(len(res.conformers))
         res.verify_flags()
+
+        # print(self.fixed_conformers)
+        #        for x in self.free_residues:
+        #            print x
+
     return residues
 
 
-def report_residues():
-    lines = []
+def group_clusters():
+    cltrs = []
+    print("   Identify clusters, size: residues")
     for res in residues:
-        lines.append("%s \n" % (res.resid))
+        if len(res.free_conformers) > 1:
+            cluster = Cluster(res)
+            cltrs.append(cluster)
 
-        lines.append("Number of fixed conformers: %d\n" % len(res.fixed_conformers))
-        for conf in res.fixed_conformers:
-            line = conf.printme()
-            lines.append("   %s\n" % line)
+    for cluster in cltrs:
+        ids = [x.resid for x in cluster.residues]
+        print("      %3d: %s" % (len(ids), ", ".join(ids)))
 
-        lines.append("Number of free conformers: %d\n" % len(res.free_conformers))
-        for conf in res.free_conformers:
-            line = conf.printme()
-            lines.append("   %s\n" % line)
+    return cltrs
 
-        lines.append("Number of residue neighbors: %d\n" % len(res.neighbors))
-        line = ",".join([x.resid for x in res.neighbors])
-        lines.append("   %s\n" % line)
 
-    lines.append("\n")
-    open(residue_report, "w").writelines(lines)
+def initialize_clusters(ph, eh):
+    for cluster in clusters:
+        cluster.init_energy()
+
     return
-
 
 
 env = Env()
 head3lst = load_head3lst()
 pairwise = load_pairwise()
 residues = group_residues()
-for res in residues:
-    res.find_neighbors()
-
+clusters = group_clusters()
 
 if __name__ == "__main__":
-    report_residues()
-
     ph_start = env.var["(TITR_PH0)"]
     ph_step = env.var["(TITR_PHD)"]
     eh_start = env.var["(TITR_EH0)"]
@@ -407,7 +432,5 @@ if __name__ == "__main__":
         else:
             ph = ph_start
             eh = eh_start + eh_step * ititr
-        print ("\n   Titration at pH = %.1f and Eh = %.f" % (ph, eh))
-        #initialize_conformers(ph, eh)
-        #initialize_nodes()
-        #initialize_clusters(ph, eh)
+        print ("   Titration at pH = %.1f and Eh = %.f" % (ph, eh))
+        initialize_clusters(ph, eh)
