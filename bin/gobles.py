@@ -8,10 +8,12 @@ import numpy as np
 
 ROOMT = 298.15
 PH2KCAL = 1.364
-CLUSTER_PWCUTOFF = 1.0  # include into a cluster if conf-conf pw is bigger than this value
+CLUSTER_PWCUTOFF = 0.5  # include into a cluster if conf-conf pw is bigger than this value
+CLUSTER_EXTENDED_LEVEL = 3  # extend nodes at this level of neighbor search
 
-residue_report = "cluster_residues.log"
-
+residue_report = "nodes.info"
+neighbor_report = "neighbor.info"
+cluster_report = "cluster.info"
 
 float_values = ["(EPSILON_PROT)", "(TITR_PH0)", "(TITR_PHD)", "(TITR_EH0)", "(TITR_EHD)", "EXTRA", "SCALING"]
 int_values = ["(TITR_STEPS)"]
@@ -171,7 +173,7 @@ class Residue:
                 if conf.on:
                     print("      %s %c %4.2f -> %s t  0.00 (fixed conformers already have occ 1.0)" % (
                         head3lst[conf.i].confname,
-                        conf.flag, conf.occ, conf.confname))
+                        conf.flag, conf.occ, head3lst[conf.i].confname))
                     conf.occ = 0.0
                     conf.on = False
                     conf.flag = "t"
@@ -204,26 +206,6 @@ class Residue:
             print("   Exiting ...")
             sys.exit()
         return
-
-    def find_neighbors(self):
-        for r in residues:
-            if self.resid != r.resid:
-                maxpw = self.find_maxpw(self, r)
-                if maxpw > CLUSTER_PWCUTOFF:
-                    self.neighbors.append(r)
-
-    @staticmethod
-    def find_maxpw(r1, r2):
-        maxval = -0.1
-        for conf1 in r1.free_conformers:
-            ic = conf1.i
-            for conf2 in r2.free_conformers:
-                jc = conf2.i
-                pw = abs(pairwise[ic][jc])
-                if maxval < pw:
-                    maxval = pw
-        return maxval
-
 
 
 class Conformer:
@@ -272,7 +254,65 @@ class Conformer:
                head3lst[self.i].history)
         return line
 
-    def set_Eself(self, ph, eh):
+
+class Node:
+    """
+    Node is a simplified structure for free residues and contains only free conformers. It is the core for MC sampling.
+    """
+    def __init__(self, res):
+        self.resid = res.resid
+        self.free_conformers = res.free_conformers
+        self.neighbors = []
+        return
+
+    def find_neighbors(self):
+        for n in nodes:
+            if self.resid != n.resid:
+                maxpw = self.find_maxpw(self, n)
+                if maxpw > CLUSTER_PWCUTOFF:
+                    self.neighbors.append(n)
+
+    @staticmethod
+    def find_maxpw(n1, n2):
+        max_val = -0.1
+        for conf1 in n1.free_conformers:
+            ic = conf1.i
+            for conf2 in n2.free_conformers:
+                jc = conf2.i
+                pw = abs(pairwise[ic][jc])
+                if max_val < pw:
+                    max_val = pw
+        return max_val
+
+
+class Cluster:
+    def __init__(self, nd):
+        self.nodes = [nd]
+        self.open_ends = False
+        # Traverse to get nodes at predefined level
+        queue = []
+        current_node = nd
+        current_level = 0
+        while current_node:
+            if current_level < CLUSTER_EXTENDED_LEVEL:  # only lower level needs to be extended
+                for x in current_node.neighbors:
+                    if x not in self.nodes:
+                        queue.append((x, current_level+1))
+                        self.nodes.append(x)
+            else:  # at the highest level
+                print("%s:%s = %d" % (nd.resid, current_node.resid, current_level))
+                for x in current_node.neighbors:
+                    if x not in self.nodes:
+                        self.open_ends = True     # some extended nodes are outside the level
+                        break
+            if self.open_ends:
+               break
+            if queue:
+                current_node, current_level = queue.pop(0)
+            else:
+                self.open_ends = False    # all nodes exaused
+                break
+
         return
 
 
@@ -359,25 +399,75 @@ def group_residues():
 
 def report_residues():
     lines = []
+    lines.append("iConf CONFORMER     FL  occ          Residue           Node           Free conformer\n")
     for res in residues:
-        lines.append("%s \n" % (res.resid))
+        if len(res.free_conformers) > 0:
+            iline = 0
+            for conf in res.free_conformers:
+                line = "%05d %s f %4.2f |" % (head3lst[conf.i].iConf, head3lst[conf.i].confname, conf.occ)
+                if iline == 0:
+                    line += " ----- %s ----- %s ----- | %s" % (res.resid, res.resid, head3lst[conf.i].confname)
+                else:
+                    line += " %s | %s" % (" " * 37, head3lst[conf.i].confname)
+                lines.append("%s\n" % line)
+                iline += 1
+            for conf in res.fixed_conformers:
+                line = "%05d %s t %4.2f |" % (head3lst[conf.i].iConf, head3lst[conf.i].confname, conf.occ)
+                if iline == 0:
+                    line += " ----- %s ----- %s ----- | %s" % (res.resid, res.resid, head3lst[conf.i].confname)
+                lines.append("%s\n" % line)
+                iline += 1
+        else:
+            iline = 0
+            for conf in res.fixed_conformers:
+                line = "%05d %s t %4.2f |" % (head3lst[conf.i].iConf, head3lst[conf.i].confname, conf.occ)
+                if iline == 0:
+                    line += " ----- %s" % (res.resid)
+                lines.append("%s\n" % line)
+                iline += 1
 
-        lines.append("Number of fixed conformers: %d\n" % len(res.fixed_conformers))
-        for conf in res.fixed_conformers:
-            line = conf.printme()
-            lines.append("   %s\n" % line)
+        lines.append("%s\n" % ("." * 84))
 
-        lines.append("Number of free conformers: %d\n" % len(res.free_conformers))
-        for conf in res.free_conformers:
-            line = conf.printme()
-            lines.append("   %s\n" % line)
+    open(residue_report, "w").writelines(lines)
+    return
 
-        lines.append("Number of residue neighbors: %d\n" % len(res.neighbors))
-        line = ",".join([x.resid for x in res.neighbors])
-        lines.append("   %s\n" % line)
+
+def report_neighbors():
+    lines = []
+    for nd in nodes:
+        lines.append("%3d %s: %s\n" % (len(nd.neighbors), nd.resid , ",".join([x.resid for x in nd.neighbors])))
 
     lines.append("\n")
-    open(residue_report, "w").writelines(lines)
+    open(neighbor_report, "w").writelines(lines)
+    return
+
+def define_nodes():
+    nodes = []
+    for res in residues:
+        if len(res.free_conformers) > 1:
+            nodes.append(Node(res))
+    return nodes
+
+
+def define_clusters():
+    cls = []
+    for nd in nodes:
+        cls.append(Cluster(nd))
+    return cls
+
+
+def report_clusters():
+    lines = []
+    for cluster in clusters:
+        if cluster.open_ends:
+            t = "+"
+        else:
+            t = ""
+        lines.append("%3d %s: %s %s\n" % (len(cluster.nodes), cluster.nodes[0].resid, ",".join([x.resid for x in
+                                                                                        cluster.nodes]), t))
+
+    lines.append("\n")
+    open(cluster_report, "w").writelines(lines)
     return
 
 
@@ -386,12 +476,16 @@ env = Env()
 head3lst = load_head3lst()
 pairwise = load_pairwise()
 residues = group_residues()
-for res in residues:
-    res.find_neighbors()
+nodes = define_nodes()
+for node in nodes:
+    node.find_neighbors()
+clusters = define_clusters()
 
 
 if __name__ == "__main__":
     report_residues()
+    report_neighbors()
+    report_clusters()
 
     ph_start = env.var["(TITR_PH0)"]
     ph_step = env.var["(TITR_PHD)"]
