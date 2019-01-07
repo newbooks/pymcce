@@ -462,6 +462,7 @@ def get_entropy(prot):
             for ic in confs:
                 #print("%d %s" % (ic, prot.head3lst[ic].confname))
                 if prot.head3list[ic].on:
+
                     sum += prot.head3list[ic].mc_occ
                 else:
                     sum += prot.head3list[ic].occ

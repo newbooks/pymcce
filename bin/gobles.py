@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+# Ideas to test:
+# record first one million accessible states and compute occupancy from these
+# Load previous fort.38 as start point to speed up equilibration
+
+
 """
 Global Optimization by Local Equilibrium Sampling
 """
@@ -6,14 +12,16 @@ import sys
 import os.path
 import random
 import numpy as np
+import math
+import itertools
 
 ROOMT = 298.15
 PH2KCAL = 1.364
+KCAL2KT = 1.688
 CLUSTER_PWCUTOFF = 0.5  # include into a cluster if conf-conf pw is bigger than this value
 CLUSTER_EXTENDED_LEVEL = 3  # extend nodes at this level of neighbor search
-EQ_MAXCYCLES = 100   # maximum cycles to equilibrate the clusters
-EQ_CONVERGE = 0.01   # occupancy convergence (standard deviation of free confs) criterion
-
+EQ_MAXCYCLES = 100  # maximum cycles to equilibrate the clusters
+EQ_CONVERGE = 0.02  # occupancy convergence (max deviation of free confs) criterion
 
 residue_report = "nodes.info"
 neighbor_report = "neighbor.info"
@@ -24,7 +32,7 @@ mc_progress = "mc.log"
 
 float_values = ["(EPSILON_PROT)", "(TITR_PH0)", "(TITR_PHD)", "(TITR_EH0)", "(TITR_EHD)", "EXTRA", "SCALING",
                 "(MONTE_T)"]
-int_values = ["(TITR_STEPS)", "(NSTATE_MAX)"]
+int_values = ["(TITR_STEPS)", "(NSTATE_MAX)", "(MONTE_FLIPS)", "(MONTE_TRACE)", "(MONTE_NITER)"]
 
 
 class Env:
@@ -192,9 +200,9 @@ class Residue:
                     if conf.on:
                         print("      %s %c %4.2f -> %s t  1.00 (single free conformer of the residue)" % (
                             head3lst[conf.i].confname,
-                                                                                                          conf.flag,
-                                                                                                          conf.occ,
-                                                                                                          head3lst[conf.i].confname))
+                            conf.flag,
+                            conf.occ,
+                            head3lst[conf.i].confname))
                         conf.on = False
                         conf.occ = 1.0
                         conf.flag = "t"
@@ -218,17 +226,18 @@ class Residue:
 
 class Conformer:
     def __init__(self, ic):
-        self.i = ic    # make a link to the head3lst
+        self.i = ic  # make a link to the head3lst
         self.flag = ""
         self.on = True  # True means to be sampled, False means fixed at occ
-        self.occ = 0.0
+        self.occ = 0.0  # final occ calculated from a sampling cycle
         self.occ_old = 0.0
         self.counter = 0
-        self.E_self = head3lst[ic].vdw0 + head3lst[ic].vdw1 + head3lst[ic].epol + head3lst[ic].tors + head3lst[ic].dsolv + head3lst[ic].extra
+        self.mc_occ = 0.0    # Monte Carlo occ, used for entropy calculation
+        self.E_self = head3lst[ic].vdw0 + head3lst[ic].vdw1 + head3lst[ic].epol + head3lst[ic].tors + head3lst[
+            ic].dsolv + head3lst[ic].extra
         self.E_pheh = 0.0  # ph and eh effect
-        self.E_mfe = 0.0   # when in an active cluster, this is the pairwise from outside conformers.
-        self.entropy = 0.0 # entropy correction, used by metropolis criterion but not by system energy.
-        self.entropy_old = 0.0
+        self.E_mfe = 0.0  # when in an active cluster, this is the pairwise from outside conformers.
+        self.entropy = 0.0  # entropy correction, used by metropolis criterion but not by system energy.
         self.E_total = 0.0
         self.type = ""
         self.load(ic)
@@ -242,6 +251,7 @@ class Conformer:
         else:
             self.on = True
             self.occ = 0.0
+        self.type = (head3lst[ic].ne, head3lst[ic].nh, head3lst[ic].confname[3])
         return
 
     def printme(self):
@@ -249,22 +259,23 @@ class Conformer:
             flag = "f"
         else:
             flag = "t"
-        line = "%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" % (head3lst[self.i].iConf,
-               head3lst[self.i].confname,
-               flag,
-               self.occ,
-               head3lst[self.i].crg,
-               head3lst[self.i].em0,
-               head3lst[self.i].pk0,
-               head3lst[self.i].ne,
-               head3lst[self.i].nh,
-               head3lst[self.i].vdw0,
-               head3lst[self.i].vdw1,
-               head3lst[self.i].tors,
-               head3lst[self.i].epol,
-               head3lst[self.i].dsolv,
-               head3lst[self.i].extra,
-               head3lst[self.i].history)
+        line = "%05d %s %c %4.2f %6.3f %5d %5.2f %2d %2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f %s" % (
+        head3lst[self.i].iConf,
+        head3lst[self.i].confname,
+        flag,
+        self.occ,
+        head3lst[self.i].crg,
+        head3lst[self.i].em0,
+        head3lst[self.i].pk0,
+        head3lst[self.i].ne,
+        head3lst[self.i].nh,
+        head3lst[self.i].vdw0,
+        head3lst[self.i].vdw1,
+        head3lst[self.i].tors,
+        head3lst[self.i].epol,
+        head3lst[self.i].dsolv,
+        head3lst[self.i].extra,
+        head3lst[self.i].history)
         return line
 
 
@@ -272,6 +283,7 @@ class Node:
     """
     Node is a simplified structure for free residues and contains only free conformers. It is the core for MC sampling.
     """
+
     def __init__(self, res):
         self.resid = res.resid
         self.free_conformers = res.free_conformers
@@ -310,20 +322,20 @@ class Cluster:
             if current_level < CLUSTER_EXTENDED_LEVEL:  # only lower level needs to be extended
                 for x in current_node.neighbors:
                     if x not in self.nodes:
-                        queue.append((x, current_level+1))
+                        queue.append((x, current_level + 1))
                         self.nodes.append(x)
             else:  # at the highest level
-                #print("%s:%s = %d" % (nd.resid, current_node.resid, current_level))
+                # print("%s:%s = %d" % (nd.resid, current_node.resid, current_level))
                 for x in current_node.neighbors:
                     if x not in self.nodes:
-                        self.open_ends = True     # some extended nodes are outside the level
+                        self.open_ends = True  # some extended nodes are outside the level
                         break
             if self.open_ends:
-               break
+                break
             if queue:
                 current_node, current_level = queue.pop(0)
             else:
-                self.open_ends = False    # all nodes exaused
+                self.open_ends = False  # all nodes exaused
                 break
         self.accessible_states = []
         self.E_ambient = 0.0
@@ -341,11 +353,217 @@ class Cluster:
         return
 
     def mc_run(self):
+        T = env.var["(MONTE_T)"]
+        b = -KCAL2KT / (T / ROOMT)
+        n_free = len(self.nodes)
+        nflips = env.var["(MONTE_FLIPS)"]
+
+        state = [random.choice(x.free_conformers).i for x in self.nodes]
+        # clear counters and compute total self energy
+        for node in self.nodes:
+            for conf in node.free_conformers:
+                conf.counter = 0
+                conf.E_total = conf.E_self + conf.E_pheh + conf.E_mfe + conf.entropy
+        H_average = 0.0
+
+        E_minimum = E_state = get_stateE(state)
+        H_state = get_stateH(state)
+
+
+        # trace cycles
+        n_confs = sum([len(nd.free_conformers) for nd in self.nodes])
+        N = env.var["(MONTE_NITER)"] * n_confs
+        # print("%d, %d, %d" % (n_confs, env.var["(MONTE_NITER)"], N))
+        if env.var["(MONTE_TRACE)"] > 0:
+            cycles = int((N - 1) / env.var["(MONTE_TRACE)"]) + 1  # minimum 1
+            n_total = cycles * env.var["(MONTE_TRACE)"]
+            n_cycle = env.var["(MONTE_TRACE)"]
+        else:
+            cycles = 1
+            n_total = n_cycle = N
+
+
+        for i in range(cycles):
+            fp_mc_progress.write("   Step %6d [%s], E_minimum = %.2f, E_running = %.2f, H_running = %.2f\n" % (i *
+                                                                                                               n_cycle,
+                                                                                                               ",".
+                                                                                                               join([
+                                                                                                                   str(
+                                                                                                                       x)
+                                                                                                                   for
+                                                                                                                   x in
+                                                                                                                   state]),
+                                                                                                               E_minimum,
+                                                                                                               E_state,
+                                                                                                               H_state))
+            fp_mc_progress.flush()
+
+            iters = n_cycle
+            while iters:
+                old_satet = [x for x in state]
+
+                # 1st flip
+                inode = random.randrange(n_free)
+                while True:
+                    new_conf = random.choice(self.nodes[inode].free_conformers).i
+                    if new_conf != state[inode]:
+                        break
+                old_conf = state[inode]
+                state[inode] = new_conf
+                dE = conformers[new_conf].E_total - conformers[old_conf].E_total
+                for j in range(n_free):
+                    dE += pairwise[new_conf][state[j]] - pairwise[old_conf][state[j]]
+                dH_correction = - (conformers[new_conf].entropy - conformers[old_conf].entropy)   # take off entropy
+
+                # multi flip
+                if random.choice([True, False]):
+                    other_nodes = [x for x in range(n_free) if x != inode]
+                    # print inode, other_nodes
+                    if other_nodes:
+                        for k in range(nflips):
+                            iflip = random.choice(other_nodes)    # which node to flip
+                            old_conf = state[iflip]
+                            new_conf = random.choice(self.nodes[iflip].free_conformers).i
+                            #print [x.i for x in self.nodes[iflip].free_conformers], old_conf, new_conf
+                            state[iflip] = new_conf
+
+                            dE += conformers[new_conf].E_total - conformers[old_conf].E_total
+                            dH_correction += - (conformers[new_conf].entropy - conformers[old_conf].entropy)
+                            for j in range(n_free):
+                                dE += pairwise[new_conf][state[j]] - pairwise[old_conf][state[j]]
+
+                dH = dE + dH_correction    # dH equals dE plus the correction on entropy
+
+                if dE < 0.0:
+                    flip = True
+                elif random.random() < math.exp(b * dE):
+                    flip = True
+                else:
+                    flip = False
+
+                if flip:  # update energy and enthalpy
+                    E_state += dE
+                    H_state += dH
+                    if E_minimum > E_state:
+                        E_minimum = E_state
+                else:   # go back to old state
+                    state = [x for x in old_satet]
+
+                for ic in state:
+                    conformers[ic].counter += 1
+
+                H_average += H_state
+                iters -= 1
+
+        fp_mc_progress.write("   Exit cluster state: [%s]\n" % ",".join(["%d" % x for x in state]))
+        fp_mc_progress.write("   Exit %d, E_minimum = %10.2f, E_running = %.2f, H_running = %.2f\n" % (n_total,
+                                                                                                     E_minimum,
+                                                                                                     E_state, H_state))
+        fp_mc_progress.write("   The average running enthalpy is %8.3f\n" % (H_average / n_total))
+        fp_mc_progress.flush()
+
+        for nd in self.nodes:
+            for conf in nd.free_conformers:
+                conf.mc_occ = float(conf.counter)/n_total
+
+        self.E_cluster = H_average / n_total
+        self.E_global = self.E_ambient + self.E_cluster
+
+        return
+
+    def analytical_run(self):
+        T = env.var["(MONTE_T)"]
+        b = -KCAL2KT / (T / ROOMT)
+        n_free = len(self.nodes)
+
+        free_conformers = [[conf.i for conf in x.free_conformers] for x in self.nodes]
+        analytical_states = list(itertools.product(*free_conformers))
+        analytical_energies = np.zeros(len(analytical_states))
+        analytical_enthalpy = np.zeros(len(analytical_states))
+
+        # clear counters and compute total self energy
+        for node in self.nodes:
+            for conf in node.free_conformers:
+                conf.counter = 0
+                conf.E_total = conf.E_self + conf.E_pheh + conf.E_mfe + conf.entropy
+
+        old_state = state = list(analytical_states[0])
+        E_minimum = E_state = get_stateE(state)
+        H_state = get_stateH(state)
+
+        for i in range(1, len(analytical_states)):
+            new_state = analytical_states[i]
+            dE = 0.0
+            dH_correction = 0.0
+            for ires in range(len(new_state)):
+                if old_state[ires] != new_state[ires]:
+                    old_conf = old_state[ires]
+                    new_conf = new_state[ires]
+                    dE += conformers[new_conf].E_total - conformers[old_conf].E_total
+                    dH_correction += - (conformers[new_conf].entropy - conformers[old_conf].entropy)
+                    for j in range(n_free):
+                        dE += pairwise[new_conf][state[j]] - pairwise[old_conf][state[j]]
+                    old_state[ires] = new_state[ires]
+            E_state += dE
+            H_state += dE + dH_correction
+            analytical_energies[i] = E_state
+            analytical_enthalpy[i] = H_state
+            if E_minimum > E_state:
+                E_minimum = E_state
+
+            if not (i % 10000):
+                E_scratch = get_stateE(new_state)
+                print("Drift test: From dE: %.3f, From scratch: %.3f" % (E_state, E_scratch))
+
+        tared_Es = analytical_energies - E_minimum
+        occ_states = np.fromiter([math.exp(b*x) for x in tared_Es], float)
+        total_occ = np.sum(occ_states)
+        occ_norm = occ_states / total_occ
+
+        for nd in self.nodes:
+            for conf in nd.free_conformers:
+                conf.mc_occ = 0.0
+
+        for istate in range(len(analytical_states)):
+            for ic in analytical_states[istate]:
+                conformers[ic].mc_occ += occ_norm[istate]
+
+        self.E_cluster = np.sum(analytical_enthalpy * occ_norm)
+        self.E_global = self.E_cluster + self.E_ambient
 
         return
 
     def update_entropy(self):
+        for nd in self.nodes:
+            typeids = {}
+            for conf in nd.free_conformers:
+                if conf.type in typeids:
+                    typeids[conf.type].append(conf)
+                else:
+                    typeids[conf.type] = [conf]
+
+            for typeid in typeids:
+                TS = 0.0
+                sum_occ = 0.0
+                confs = typeids[typeid]
+
+                for conf in confs:
+                    sum_occ += conf.mc_occ
+
+                if sum_occ < 0.0001:
+                    for conf in confs:
+                        conf.entropy = 0.0
+                else:
+                    for conf in confs:
+                        p = conf.mc_occ / sum_occ
+                        if p > 1.0E-6:
+                            TS -= p * math.log(p) / 1.688
+                    for conf in confs:
+                        conf.entropy = TS
+
         return
+
+
 def load_head3lst():
     conformers = []
     fname = env.fn_conflist3
@@ -397,11 +615,18 @@ def load_pairwise():
 
     # average the opposite sides
     for ic in range(n_conf - 1):
+        ires_id = confnames[ic][:3] + confnames[ic][5:11]
         for jc in range(ic + 1, n_conf):
             # if abs(pw[ic][jc] - pw[jc][ic]) > 0.000001:
             # print("%s %.3f <-> %s %.3f" % (confnames[ic], pw[ic][jc], confnames[jc], pw[jc][ic]))
             averaged_pw = (pw[ic][jc] + pw[jc][ic]) * 0.5
             pw[ic][jc] = pw[jc][ic] = averaged_pw
+
+            # pw in the same residue set to 0
+            jres_id = confnames[jc][:3] + confnames[jc][5:11]
+            if ires_id == jres_id:
+                pw[ic][jc] = pw[jc][ic] = 0.0
+
     return pw
 
 
@@ -464,11 +689,12 @@ def report_residues():
 def report_neighbors():
     lines = []
     for nd in nodes:
-        lines.append("%3d %s: %s\n" % (len(nd.neighbors), nd.resid , ",".join([x.resid for x in nd.neighbors])))
+        lines.append("%3d %s: %s\n" % (len(nd.neighbors), nd.resid, ",".join([x.resid for x in nd.neighbors])))
 
     lines.append("\n")
     open(neighbor_report, "w").writelines(lines)
     return
+
 
 def define_nodes():
     nodes = []
@@ -486,7 +712,7 @@ def define_clusters():
     # Filter clusters: merge closed clusters
     filtered_clusters = []
     while cls:
-        #print("%s" % ",".join([x.nodes[0].resid for x in filtered_clusters]))
+        # print("%s" % ",".join([x.nodes[0].resid for x in filtered_clusters]))
         cluster = cls.pop(0)
         filtered_clusters.append(cluster)
         if not cluster.open_ends:  # closed cluster
@@ -506,11 +732,12 @@ def report_clusters():
         else:
             t = ""
         lines.append("%3d %s: %s %s\n" % (len(cluster.nodes), cluster.nodes[0].resid, ",".join([x.resid for x in
-                                                                                        cluster.nodes]), t))
+                                                                                                cluster.nodes]), t))
 
     lines.append("\n")
     open(cluster_report, "w").writelines(lines)
     return
+
 
 def update_conf_energy(ph, eh):
     for ic in range(len(conformers)):
@@ -521,19 +748,28 @@ def update_conf_energy(ph, eh):
     return
 
 
-def MC(cluster):
-    """Monte Carlo sampling function."""
-    # entropy run
-    if env.var["(MONTE_TSX)"].upper() == "T":
-        cluster.mc_run()
-        cluster.update_entropy()
+def get_stateE(state):
+    E = 0.0
+    for ic in state:
+        E += conformers[ic].E_self + conformers[ic].E_pheh + conformers[ic].E_mfe + conformers[ic].entropy
+    for i in range(len(state) - 1):
+        ic = state[i]
+        for j in range(i + 1, len(state)):
+            jc = state[j]
+            E += pairwise[ic][jc]
+    return E
 
-    # occ run
-    for imc in range(6):
-        cluster.mc_run()
 
-    return
-
+def get_stateH(state):
+    H = 0.0
+    for ic in state:
+        H += conformers[ic].E_self + conformers[ic].E_pheh + conformers[ic].E_mfe
+    for i in range(len(state) - 1):
+        ic = state[i]
+        for j in range(i + 1, len(state)):
+            jc = state[j]
+            H += pairwise[ic][jc]
+    return H
 
 
 def cluster_MC(cluster):
@@ -542,22 +778,22 @@ def cluster_MC(cluster):
         for conf in nd.free_conformers:
             conf.E_mfe = 0.0
             for res in cluster.outside_residues:
-                for conf2 in res.free_conformers:
+                for conf2 in res.conformers:
                     conf.E_mfe += pairwise[conf.i][conf2.i] * conf2.occ
-            #print("%s: %6.2f" % (head3lst[conf.i].confname, conf.E_mfe))
+                    # print("%s: %6.2f" % (head3lst[conf.i].confname, conf.E_mfe))
 
     # compute ambient energy
     # self
     E_self = 0.0
     for res in cluster.outside_residues:
         for conf in res.conformers:
-            E_self += conf.E_self + conf.E_pheh
+            E_self += (conf.E_self + conf.E_pheh) * conf.occ
 
     # pw
     E_pw = 0.0
     n_res = len(cluster.outside_residues)
-    for ires in range(n_res -1):
-        for jres in range(ires+1, n_res):
+    for ires in range(n_res - 1):
+        for jres in range(ires + 1, n_res):
             for conf1 in cluster.outside_residues[ires].conformers:
                 for conf2 in cluster.outside_residues[jres].conformers:
                     E_pw += pairwise[conf1.i][conf2.i] * conf1.occ * conf2.occ
@@ -572,44 +808,117 @@ def cluster_MC(cluster):
     if nstate > env.var["(NSTATE_MAX)"]:
         # Monte Carlo sampling
         if cluster.open_ends:
-            t = " "
-        else:
             t = "+"
+        else:
+            t = " "
         msg = "Cluster: %s %s\n" % (", ".join([x.resid for x in cluster.nodes]), t)
         fp_mc_progress.write(msg)
         msg = "n = %d, > %d Monte Carlo sampling\n" % (nstate, env.var["(NSTATE_MAX)"])
         fp_mc_progress.write(msg)
-        MC(cluster)
+
+        # entropy run
+        if env.var["(MONTE_TSX)"].upper() == "T":
+            fp_mc_progress.write("Entropy run:\n")
+            cluster.mc_run()
+            cluster.update_entropy()
+
+        # occ run
+        fp_mc_progress.write("Occ run:\n")
+        cluster.mc_run()
 
     else:
         # Analytical solution
         if cluster.open_ends:
-            t = " "
-        else:
             t = "+"
+        else:
+            t = " "
         msg = "Cluster: %s %s\n" % (", ".join([x.resid for x in cluster.nodes]), t)
         fp_mc_progress.write(msg)
         msg = "n = %d, <= %d Analytical solution\n" % (nstate, env.var["(NSTATE_MAX)"])
         fp_mc_progress.write(msg)
 
+        # entropy run
+        if env.var["(MONTE_TSX)"].upper() == "T":
+            cluster.analytical_run()
+            cluster.update_entropy()
+
+        # occ run
+        cluster.analytical_run()
+
+
+
     # Push occ to occ_old and compute new occ.
+    if cluster.open_ends:  # only set occ of the first node for open cluster so that other nodes keep their occ
+        for conf in cluster.nodes[0].free_conformers:
+            conf.occ_old = conf.occ
+            conf.occ = conf.mc_occ
+    else:  # set occ of closed nodes
+        for nd in cluster.nodes:
+            for conf in nd.free_conformers:
+                conf.occ_old = conf.occ
+                conf.occ = conf.mc_occ
+
     return
+
 
 def equilibrate_clusters():
     exit_eq = False
+
+    # clear entropy, do it outside the cycles.
+    for conf in conformers:
+        conf.entropy = 0.0
+
     for icycle in range(EQ_MAXCYCLES):
+        # print icycle
         q = range(len(clusters))
         random.shuffle(q)
         for icluster in q:
             cluster_MC(clusters[icluster])
 
-        # compute convergence and energy
-        # break if converged early
-        break
+        # write entropy
+        line = "Entropy from cycle %d: Occ Entropy\n" % icycle
+        fp_mc_progress.write(line)
+        for conf in conformers:
+            line = "%s %.3f %.2f\n" % (head3lst[conf.i].confname, conf.occ, conf.entropy)
+            fp_mc_progress.write(line)
 
+        # compute occ convergence
+        line = "\nOccupancy convergence in cycle %d: Confname previousOcc CurrentOcc Delta\n" % icycle
+        fp_mc_progress.write(line)
+        for conf in conformers:
+            line = "%s %.3f %.3f %.3f\n" % (head3lst[conf.i].confname, conf.occ_old, conf.occ, abs(conf.occ -
+                                                                                                   conf.occ_old))
+            fp_mc_progress.write(line)
+
+        deltas = [abs(conf.occ - conf.occ_old) for conf in conformers]
+        convergence = max(deltas)
+        line = "\nOccupancy convergence (max diff) in cycle %d: %s %.3f\n\n" % (icycle, head3lst[deltas.index(max(
+            deltas))].confname, convergence)
+        fp_mc_progress.write(line)
+
+        # compute energy convergence
+        cluster_Hs = [(cluster.E_ambient, cluster.E_cluster, cluster.E_global) for cluster in clusters]
+        line = "\nCluster energy: Ambient+inCluster=Global\n"
+        fp_mc_progress.write(line)
+        for h in cluster_Hs:
+            line = "%8.3f+%8.3f=%8.3f\n" % h
+            fp_mc_progress.write(line)
+        fp_mc_progress.write("\n")
+
+        cluster_Hs = np.array([cluster.E_global for cluster in clusters])
+        H_mean = float(cluster_Hs.mean())
+        H_stdev = float(cluster_Hs.std())
+
+        line = "\n Cluster energy mean and standard deviation in cycle %d: %.3f   %.3f\n" % (icycle, H_mean, H_stdev)
+        fp_mc_progress.write(line)
+
+        # break if converged early
+        if convergence < EQ_CONVERGE:
+            line = "\nReached occupancy convergence: %.3f < %.3f\n\n" % (convergence, EQ_CONVERGE)
+            fp_mc_progress.write(line)
+            break
 
     return
-
 
 
 env = Env()
@@ -622,7 +931,6 @@ for node in nodes:
     node.find_neighbors()
 clusters = define_clusters()
 
-
 if __name__ == "__main__":
     report_residues()
     report_neighbors()
@@ -634,6 +942,9 @@ if __name__ == "__main__":
     eh_step = env.var["(TITR_EHD)"]
     titration_type = env.var["(TITR_TYPE)"]
     titration_steps = env.var["(TITR_STEPS)"]
+
+    for conf in conformers:
+        conf.occ_old = conf.occ
 
     fp_mc_progress = open(mc_progress, "w")
     for ititr in range(titration_steps):
@@ -650,6 +961,6 @@ if __name__ == "__main__":
 
         update_conf_energy(ph, eh)
         equilibrate_clusters()
-        #initialize_nodes()
-        #initialize_clusters(ph, eh)
+
+
     fp_mc_progress.close()
