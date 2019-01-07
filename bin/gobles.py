@@ -14,6 +14,7 @@ import random
 import numpy as np
 import math
 import itertools
+import time
 
 ROOMT = 298.15
 PH2KCAL = 1.364
@@ -548,14 +549,14 @@ class Cluster:
                 confs = typeids[typeid]
 
                 for conf in confs:
-                    sum_occ += conf.mc_occ
+                    sum_occ += conf.occ
 
                 if sum_occ < 0.0001:
                     for conf in confs:
                         conf.entropy = 0.0
                 else:
                     for conf in confs:
-                        p = conf.mc_occ / sum_occ
+                        p = conf.occ / sum_occ
                         if p > 1.0E-6:
                             TS -= p * math.log(p) / 1.688
                     for conf in confs:
@@ -819,7 +820,7 @@ def cluster_MC(cluster):
         # entropy run
         if env.var["(MONTE_TSX)"].upper() == "T":
             fp_mc_progress.write("Entropy run:\n")
-            cluster.mc_run()
+            #cluster.mc_run()
             cluster.update_entropy()
 
         # occ run
@@ -839,7 +840,7 @@ def cluster_MC(cluster):
 
         # entropy run
         if env.var["(MONTE_TSX)"].upper() == "T":
-            cluster.analytical_run()
+            #cluster.analytical_run()
             cluster.update_entropy()
 
         # occ run
@@ -909,7 +910,7 @@ def equilibrate_clusters():
         H_mean = float(cluster_Hs.mean())
         H_stdev = float(cluster_Hs.std())
 
-        line = "\n Cluster energy mean and standard deviation in cycle %d: %.3f   %.3f\n" % (icycle, H_mean, H_stdev)
+        line = "\nCluster energy mean and standard deviation in cycle %d: %.3f   %.3f\n" % (icycle, H_mean, H_stdev)
         fp_mc_progress.write(line)
 
         # break if converged early
@@ -920,6 +921,7 @@ def equilibrate_clusters():
 
     return
 
+timerA = time.time()
 
 env = Env()
 head3lst = load_head3lst()
@@ -947,14 +949,18 @@ if __name__ == "__main__":
         conf.occ_old = conf.occ
 
     fp_mc_progress = open(mc_progress, "w")
+    occ_at_points = []
+    entropy_at_points = []
+    points = []
     for ititr in range(titration_steps):
         if titration_type == "ph":
             ph = ph_start + ph_step * ititr
             eh = eh_start
+            points.append(ph)
         else:
             ph = ph_start
             eh = eh_start + eh_step * ititr
-
+            points.append(eh)
         print ("\n   Titration at pH = %.1f and Eh = %.f" % (ph, eh))
         line = "Sampling at pH = %.1f and Eh = %.f\n" % (ph, eh)
         fp_mc_progress.write(line)
@@ -962,5 +968,31 @@ if __name__ == "__main__":
         update_conf_energy(ph, eh)
         equilibrate_clusters()
 
+        occ_at_points.append([conf.occ for conf in conformers])
+        entropy_at_points.append([conf.entropy for conf in conformers])
 
     fp_mc_progress.close()
+
+    # print fort.38
+    lines_occ = []
+    lines_entropy = []
+    if titration_type == "ph":
+        points_str = " ".join(["%5.3f" % x for x in points])
+    else:
+        points_str = " ".join(["%5.f" % x for x in points])
+    lines_occ.append("        %s     %s\n" % (titration_type, points_str))
+    lines_entropy.append("        %s     %s\n" % (titration_type, points_str))
+
+    for ic in range(len(conformers)):
+        occ_str = " ".join(["%5.3f" % occ_at_points[ip][ic] for ip in range(titration_steps)])
+        line = "%s %s\n" % (head3lst[conformers[ic].i].confname, occ_str)
+        lines_occ.append(line)
+        occ_str = " ".join(["%5.3f" % entropy_at_points[ip][ic] for ip in range(titration_steps)])
+        line = "%s %s\n" % (head3lst[conformers[ic].i].confname, occ_str)
+        lines_entropy.append(line)
+
+    open("fort.38", "w").writelines(lines_occ)
+    open("entropy.out", "w").writelines(lines_entropy)
+
+    timerB = time.time()
+    print("Total time on MC: %1d seconds.\n" % (timerB - timerA))
