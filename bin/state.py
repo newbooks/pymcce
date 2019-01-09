@@ -4,7 +4,7 @@ import re
 from energy import *
 
 if __name__ == "__main__":
-    ph = 0.0
+    ph = 7.0
     eh = 0.0
 
     if len(sys.argv) > 1:

@@ -3,7 +3,7 @@
 # Ideas to test:
 # record first one million accessible states and compute occupancy from these
 # Load previous fort.38 as start point to speed up equilibration
-
+# Include biggest interacting nodes in cluster even if they are smaller than the cut-off
 
 """
 Global Optimization by Local Equilibrium Sampling
@@ -217,7 +217,7 @@ class Residue:
                     else:
                         self.free_conformers.append(conf)
         else:  # total occ is neither 0 or 1
-            print("   Error: Total residue occupancy is %.2f, 0.00 or 1.00 expected." % socc)
+            print("   Error: Total %s occupancy is %.2f, 0.00 or 1.00 expected." % (self.resid, socc))
             for conf in self.conformers:
                 conf.printme()
             print("   Exiting ...")
@@ -489,9 +489,10 @@ class Cluster:
                 conf.E_total = conf.E_self + conf.E_pheh + conf.E_mfe + conf.entropy
 
         old_state = state = list(analytical_states[0])
-        E_minimum = E_state = get_stateE(state)
+        analytical_energies[0] = E_minimum = E_state = get_stateE(state)
         H_state = get_stateH(state)
 
+        #print E_minimum, E_state
         for i in range(1, len(analytical_states)):
             new_state = analytical_states[i]
             dE = 0.0
@@ -512,15 +513,17 @@ class Cluster:
             if E_minimum > E_state:
                 E_minimum = E_state
 
-            if not (i % 10000):
-                E_scratch = get_stateE(new_state)
-                print("Drift test: From dE: %.3f, From scratch: %.3f" % (E_state, E_scratch))
+            #if not (i % 10000):
+            #    E_scratch = get_stateE(new_state)
+            #    print("Drift test: From dE: %.3f, From scratch: %.3f" % (E_state, E_scratch))
+
 
         tared_Es = analytical_energies - E_minimum
+        #print analytical_states, analytical_energies
         occ_states = np.fromiter([math.exp(b*x) for x in tared_Es], float)
         total_occ = np.sum(occ_states)
         occ_norm = occ_states / total_occ
-
+        #print occ_norm
         for nd in self.nodes:
             for conf in nd.free_conformers:
                 conf.mc_occ = 0.0
@@ -819,7 +822,7 @@ def cluster_MC(cluster):
 
         # entropy run
         if env.var["(MONTE_TSX)"].upper() == "T":
-            fp_mc_progress.write("Entropy run:\n")
+            fp_mc_progress.write("Doing entropy correction.\n")
             #cluster.mc_run()
             cluster.update_entropy()
 

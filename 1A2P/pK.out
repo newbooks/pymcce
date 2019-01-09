@@ -1,39 +1,39 @@
   pH             pKa/Em  n(slope) 1000*chi2      vdw0    vdw1    tors    ebkb    dsol   offset  pHpK0   EhEm0    -TS   residues   total
-NTR+A0003_        8.441     1.013     0.020     -0.00   -0.03    0.00    0.51    0.38   -0.95    0.44    0.00    0.00   -0.33      0.01
-ASP-A0008_        5.365     0.978     0.050     -0.01   -0.05    0.22   -0.56    0.23   -0.62   -0.61    0.00    0.03    1.41      0.02
-ASP-A0012_        2.768     0.918     0.025     -0.01    0.02    0.00   -0.12    0.67   -0.62    1.98    0.00    0.27   -1.93      0.26
-TYR-A0013_        >14.0                         -0.09    0.05    0.00   -0.30    1.52   -0.37   -3.80    0.00    0.30    1.96     -0.72
-TYR-A0017_        9.828     0.871     0.489     -0.10    0.00    0.00   -0.06    0.34   -0.37    0.37    0.00    0.00   -0.19     -0.02
-HIS+A0018_        <0.0                          -0.06   -0.07    0.00   -0.28    0.53   -0.73   -6.50    0.00    0.00  162.38    155.27
-LYS+A0019_       10.665     0.804     0.076     -0.04   -0.02    0.00   -0.11    0.43    0.29   -0.14    0.00    0.00   -0.43     -0.01
-ASP-A0022_        2.736     0.982     0.069     -0.00    0.06    0.00   -0.67    0.18   -0.62    2.01    0.00    0.30   -0.97      0.30
-TYR-A0024_        >14.0                         -0.07   -0.04    0.00    0.45    4.39   -0.37   -3.80    0.00    0.12    3.44      4.12
-LYS+A0027_       12.458     0.468     0.957     -0.05   -0.03    0.00    1.05    1.14    0.29    1.66    0.00    0.00   -4.06     -0.00
-GLU-A0029_        4.393     0.961     0.039      0.02    0.07    0.00   -0.62    0.49   -0.22    0.36    0.00    0.29   -0.10      0.28
-LYS+A0039_       10.545     1.011     0.005     -0.02   -0.01    0.00    0.03    0.04    0.29   -0.26    0.00    0.00   -0.09      0.00
-ASP-A0044_        3.610     0.985     0.017      0.00    0.05    0.00   -0.40    0.09   -0.62    1.14    0.00    0.30   -0.26      0.29
-LYS+A0049_       11.449     0.914     0.010     -0.03    0.07    0.00   -0.69    0.57    0.29    0.65    0.00    0.00   -0.87     -0.01
-ASP-A0054_        1.410     0.913     0.610     -0.01    0.16   -0.00   -2.24    1.43   -0.62    3.34    0.00    0.06   -2.04      0.07
-ARG+A0059_       12.996     0.776     0.071     -0.06   -0.01    0.00    0.58    0.16    0.00    0.50    0.00    0.47   -1.17      0.46
-GLU-A0060_        2.728     0.885     0.021     -0.00    0.02    0.00   -0.44    0.44   -0.22    2.02    0.00    0.05   -1.83      0.04
-LYS+A0062_       12.749     0.821     0.020     -0.03   -0.08    0.00   -0.19    0.76    0.29    1.95    0.00    0.04   -2.69      0.04
-LYS+A0066_       10.691     0.813     0.127     -0.03   -0.01    0.00   -0.03    0.11    0.29   -0.11    0.00    0.00   -0.24     -0.01
-ARG+A0069_       10.278     0.667     2.805     -0.10    0.36    0.81   -0.10    0.90    0.00   -2.22    0.00    0.06    0.37      0.10
-ARG+A0072_       12.781     0.563     0.452     -0.07    1.66    0.00   -0.58    0.16    0.00    0.28    0.00    0.26   -1.45      0.26
-GLU-A0073_        3.637     0.777     1.073     -0.13    0.07   -0.00   -1.17    1.86   -0.22    1.11    0.00    0.43   -1.51      0.43
-ASP-A0075_        <0.0                          -0.27    0.03   -0.00   -1.79    3.44   -0.62    4.75    0.00    0.11   -6.40     -0.77
-TYR-A0078_       13.173     0.734     0.008     -0.13    0.25    0.00   -1.33    2.97   -0.37   -2.97    0.00    0.03    1.57      0.02
-ARG+A0083_       12.401     0.401     4.457     -0.04   -0.25    0.55    1.10    1.21    0.00   -0.10    0.00    0.23   -2.42      0.28
-ASP-A0086_        4.059     0.902     0.071     -0.01    0.07    0.00   -0.63    1.11   -0.62    0.69    0.00    0.29   -0.62      0.29
-ARG+A0087_        >14.0                         -0.05   -0.01    0.00    0.45    1.48    0.00    1.50    0.00    0.16   -9.70     -6.16
-TYR-A0090_       13.131     0.465     0.857     -0.05    0.07    0.00   -0.49    2.45   -0.37   -2.93    0.00    0.00    1.34      0.03
-ASP-A0093_        1.746     0.896     0.064     -0.20    0.05   -0.00   -0.93    2.00   -0.62    3.00    0.00    0.00   -3.31      0.00
-TYR-A0097_       11.158     0.577     1.600     -0.07    0.02    0.00   -0.72    1.77   -0.37   -0.96    0.00    0.00    0.29     -0.03
-LYS+A0098_       10.627     0.919     0.036     -0.01   -0.01    0.00    0.34    0.33    0.29   -0.17    0.00    0.00   -0.76      0.00
-ASP-A0101_        2.007     0.905     0.070     -0.01    0.21   -0.00   -2.20    1.66   -0.62    2.74    0.00    0.00   -1.98     -0.21
-HIS+A0102_        6.958     1.000     0.006     -0.05   -0.08    0.00    0.28    0.06   -0.73    0.46    0.00    0.30    0.07      0.30
-TYR-A0103_       11.158     0.523     6.687     -0.09    0.01   -0.19   -1.00    1.90   -0.37   -0.96    0.00    0.14    0.63      0.07
-LYS+A0108_       12.012     0.695     1.405     -0.03   -0.04    0.00    0.52    1.45    0.29    1.21    0.00    0.00   -3.43     -0.03
-ARG+A0110_        >14.0                         -0.02    0.58    0.01   -0.31    0.62    0.00    1.50    0.00    0.45   -2.43      0.39
-CTR-A0110_        1.893     0.870     0.052      0.01   -0.12   -0.00   -0.82    2.18    0.00    1.86    0.00    0.26   -3.10      0.25
-_ZN+A0112_        >14.0                          0.00    0.00    0.00   -0.61  -36.21    0.00    0.00    0.00    0.00   -3.03    -39.85
+NTR+A0003_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0008_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0012_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+TYR-A0013_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+TYR-A0017_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+HIS+A0018_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0019_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0022_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+TYR-A0024_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0027_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+GLU-A0029_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0039_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0044_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0049_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0054_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ARG+A0059_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+GLU-A0060_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0062_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0066_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ARG+A0069_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ARG+A0072_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+GLU-A0073_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0075_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+TYR-A0078_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ARG+A0083_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0086_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ARG+A0087_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+TYR-A0090_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0093_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+TYR-A0097_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0098_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ASP-A0101_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+HIS+A0102_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+TYR-A0103_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+LYS+A0108_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+ARG+A0110_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+CTR-A0110_        <7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
+_ZN+A0112_        >7.0                           -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan    -nan      -nan
