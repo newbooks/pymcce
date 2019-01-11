@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# request Bourne shell as shell for job
+#$ -S /bin/sh
+# assume current working directory as paths
+#$ -N pKa
+#$ -cwd
+/home/jmao/mcce2.7/bin/mcce
