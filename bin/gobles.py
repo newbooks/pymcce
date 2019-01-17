@@ -874,7 +874,7 @@ def equilibrate_clusters():
 
     for icycle in range(EQ_MAXCYCLES):
         # print icycle
-        q = range(len(clusters))
+        q = [x for x in range(len(clusters))]
         random.shuffle(q)
         for icluster in q:
             cluster_MC(clusters[icluster])
