@@ -4,7 +4,7 @@ import sys
 import math
 KCAL2KT = 1.688
 
-state_energy = [0.0, 0.001]
+state_energy = [0.0, 0.0, 0.0]
 
 b = -KCAL2KT
 
