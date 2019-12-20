@@ -69,8 +69,37 @@ class Env:
             print("%-25s:%s" % (key, str(self.runprm[key])))
         return
 
-    def load_tpl(self, fname):
+
+    def load_tpl(self, file):
         """Load a tpl file."""
+        print("   Loading tpl file %s" % file)
+        float_values = ["EXTRA", "SCALING"]
+        int_values = []
+
+        lines = open(file).readlines()
+        for line in lines:
+            line = line.split("#")[0]
+            if len(line) < 21:
+                continue
+            keys = [line[:9], line[9:14], line[15:19]]
+            value_string = line[20:].strip()
+
+            keys = [x for x in keys if x]
+            keys = tuple(keys)
+
+            if keys[0] in float_values:
+                self.tpl[keys] = float(value_string)
+            elif keys[0] in int_values:
+                self.tpl[keys] = int(value_string)
+            else:
+                self.tpl[keys] = value_string
+
+        return
+
+
+
+    def load_ftpl(self, fname):
+        """Load a ftpl file."""
         lines = open(fname).readlines()
         for line in lines:
             line = line.split("#")[0]
