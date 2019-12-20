@@ -50,11 +50,11 @@ def analyze_state_energy(state, ph=7.0, eh=0.0, T=ROOMT, cutoff = PW_PRINT_CUT):
             E_pw_icjc = pairwise[ic][jc] * moving_occ[ic] * moving_occ[jc]
             E_pw += E_pw_icjc * 0.5    # This is because the interaction will be counted twice A <- B, B <- A
             if abs(E_pw_icjc) > cutoff:
-                print("%s <- %s: %5.2f" % (head3lst[ic].confname, head3lst[jc].confname, E_pw_icjc))
+                print("%s <- %s: %6.3f" % (head3lst[ic].confname, head3lst[jc].confname, E_pw_icjc))
 
-    print("Total pairwise interaction: %6.2f" % E_pw)
+    print("Total pairwise interaction: %7.3f" % E_pw)
 
-    print("State energy = E_self + E_pairwise = %.2f + %.2f = %.2f" %(E_self_total, E_pw, E_self_total+E_pw))
+    print("State energy = E_self + E_pairwise = %.3f + %.3f = %.3f" %(E_self_total, E_pw, E_self_total+E_pw))
 
     print("\n")
     return
