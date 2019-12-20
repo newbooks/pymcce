@@ -226,6 +226,10 @@ def load_pairwise():
     scale_ele = env.tpl[("SCALING", "ELE")]
     scale_vdw = env.tpl[("SCALING", "VDW")]
     pw = np.zeros(shape=(n_conf, n_conf))
+    iconf = {}
+    for (i, conf) in enumerate(confnames):
+        iconf[conf] = i
+
     for ic in range(n_conf):
         conf = head3lst[ic]
         oppfile = "%s/%s.opp" % (folder, conf.confname)
@@ -236,10 +240,7 @@ def load_pairwise():
                 if len(fields) < 6:
                     continue
                 confname = fields[1]
-                jc = confnames.index(confname)
-                if jc < 0:
-                    print("      Warning: %s in file %s is not a conformer" % (confname, oppfile))
-                    continue
+                jc = iconf[confname]
                 ele = float(fields[2])
                 vdw = float(fields[3])
                 pw[ic][jc] = ele * scale_ele + vdw * scale_vdw
