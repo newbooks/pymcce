@@ -2,7 +2,7 @@
 
 from data import *
 
-
+PW_PRINT_CUT = 0.001
 
 def analyze_state_energy(state, ph=7.0, eh=0.0, T=ROOMT, cutoff = PW_PRINT_CUT):
     print("Environment: pH = %.2f  eh = %.f  Temperature = %.2f K" % (ph, eh, T))

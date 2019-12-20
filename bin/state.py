@@ -3,7 +3,7 @@
 import re
 from energy import *
 
-PW_PRINT_CUT = 0.001
+
 
 if __name__ == "__main__":
     ph = 7.0
