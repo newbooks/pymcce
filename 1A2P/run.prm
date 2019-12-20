@@ -28,15 +28,15 @@ t        step 4: monte carlo sampling                       (DO_MONTE)
 Less modified entries
 ------------------------------------------------------------------------------
 4.0      Protein dielectric constant for DelPhi             (EPSILON_PROT)
-./extra.ftpl                          (EXTRA)
+./extra.tpl                          (EXTRA)
 ./name.txt MCCE renaming rule.           (RENAME_RULES)
 
 ph       "ph" for pH titration, "eh" for eh titration       (TITR_TYPE)
-7.0      Initial pH                                         (TITR_PH0)
+0.0      Initial pH                                         (TITR_PH0)
 0.0      pH interval                                        (TITR_PHD)
 0.0      Initial Eh                                         (TITR_EH0)
 30.0     Eh interval (in mV)                                (TITR_EHD)
-1        Number of titration points                         (TITR_STEPS)
+15       Number of titration points                         (TITR_STEPS)
 =============================================================================
 
 
