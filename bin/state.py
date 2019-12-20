@@ -4,10 +4,7 @@ import re
 from energy import *
 
 
-
 if __name__ == "__main__":
-    ph = 7.0
-    eh = 0.0
 
     if len(sys.argv) > 1:
         cutoff = float(sys.argv[1])

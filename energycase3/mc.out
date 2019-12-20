@@ -1,0 +1,209 @@
+Titration at ph =  7.00 and eh = 0 mv.
+Doing annealing:
+   Step          0, E_minimum =       0.00, E_running =       0.00
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -23.921
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -24.452
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,6,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -20.46
+   The average running energy, corresponding to H, is  -25.297
+   Step          0, E_minimum =     -20.46, E_running =     -20.46
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.825
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -26.380
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.279
+Doing reduction:
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.280
+Doing sampling:
+Doing analytical solution because states 1 < threshhold 1500000
+Doing annealing:
+   Step          0, E_minimum =       0.00, E_running =       0.00
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -23.796
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -24.629
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,2,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -20.46
+   The average running energy, corresponding to H, is  -25.143
+   Step          0, E_minimum =     -20.46, E_running =     -20.46
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.895
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -26.488
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.279
+Doing reduction:
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.280
+Doing sampling:
+Doing analytical solution because states 1 < threshhold 1500000
+Doing annealing:
+   Step          0, E_minimum =      -6.82, E_running =      -6.82
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -23.995
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,8,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -20.46
+   The average running energy, corresponding to H, is  -24.512
+   Step          0, E_minimum =     -20.46, E_running =     -20.46
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.154
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.927
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -26.407
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.280
+Doing reduction:
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.275
+Doing sampling:
+Doing analytical solution because states 1 < threshhold 1500000
+Doing annealing:
+   Step          0, E_minimum =       0.00, E_running =       0.00
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -23.884
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -24.484
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.245
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+0,2,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -13.64
+   The average running energy, corresponding to H, is  -25.902
+   Step          0, E_minimum =     -13.64, E_running =     -13.64
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -26.409
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.276
+Doing reduction:
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.280
+Doing sampling:
+Doing analytical solution because states 1 < threshhold 1500000
+Doing annealing:
+   Step          0, E_minimum =       0.00, E_running =       0.00
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -23.890
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,7,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -20.46
+   The average running energy, corresponding to H, is  -24.463
+   Step          0, E_minimum =     -20.46, E_running =     -20.46
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.349
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,6,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -20.46
+   The average running energy, corresponding to H, is  -25.760
+   Step          0, E_minimum =     -20.46, E_running =     -20.46
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -26.355
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.277
+Doing reduction:
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.280
+Doing sampling:
+Doing analytical solution because states 1 < threshhold 1500000
+Doing annealing:
+   Step          0, E_minimum =      -6.82, E_running =      -6.82
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -23.819
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -24.539
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.225
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -25.861
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -26.382
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.280
+Doing reduction:
+   Step          0, E_minimum =     -27.28, E_running =     -27.28
+1,4,5,9,14
+   Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+   The average running energy, corresponding to H, is  -27.279
+Doing sampling:
+Doing analytical solution because states 1 < threshhold 1500000
+Standard deviation in independent runs:
+   TYR01A0017_001 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR-1A0017_002 1.00 1.00 1.00 1.00 1.00 1.00 stdev =  0.000
+   GLU01A0029_001 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   GLU02A0029_003 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   GLU-1A0029_004 1.00 1.00 1.00 1.00 1.00 1.00 stdev =  0.000
+   ASP01A0086_001 1.00 1.00 1.00 1.00 1.00 1.00 stdev =  0.000
+   ASP-1A0086_003 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   HIS01A0102_001 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   HIS02A0102_002 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   HIS+1A0102_003 1.00 1.00 1.00 1.00 1.00 1.00 stdev =  0.000
+   TYR01A0103_001 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR01A0103_002 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR01A0103_003 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR01A0103_004 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR-1A0103_005 1.00 1.00 1.00 1.00 1.00 1.00 stdev =  0.000

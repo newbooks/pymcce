@@ -1,0 +1,35 @@
+Titration (1th) at pH =   7.00 Eh =   0.00:
+Identified 5 free residues from 5 residues.
+Doing annealing... 
+Step          0, E_minimum =      -6.82, E_running =      -6.82
+Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+The average running energy, corresponding to H, is  -27.278 kCal/mol
+Done
+
+Doing equalibration ... 
+Step          0, E_minimum =     -27.28, E_running =     -27.28
+Exit      50000, E_minimum =     -27.28, E_running =     -27.28
+The average running energy, corresponding to H, is  -27.279 kCal/mol
+Done
+
+Reducing conflist ... 15 conformers are marked as fixed.
+
+0 free residues from 5 residues, after reduction.
+
+Conformer     flag   E_self   mc01   mc02   mc03   mc04   mc05   mc06      occ Sgm(n-1)
+TYR01A0017_001   t    0.000  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+TYR-1A0017_002   t   -6.820  0.000  0.000  0.000  0.000  0.000  0.000 Av=1.000 Sg=0.000
+GLU01A0029_001   t    0.000  0.000  0.000  0.000 -0.000  0.000  0.000 Av=0.000 Sg=0.000
+GLU02A0029_003   t    0.000  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+GLU-1A0029_004   t   -6.820 3736071791706112.000  0.000  0.000  0.000 3736071791706112.000  0.000 Av=1.000 Sg=0.000
+ASP01A0086_001   t    0.000  0.000 -1.846  0.000  0.000  0.000 -1.846 Av=1.000 Sg=0.000
+ASP-1A0086_003   t    6.820  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+HIS01A0102_001   t    0.000  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+HIS02A0102_002   t    0.000  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+HIS+1A0102_003   t   -6.820  0.000  0.000  0.000  0.000  0.000  0.000 Av=1.000 Sg=0.000
+TYR01A0103_001   t    0.000  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=-1.000
+TYR01A0103_002   t    0.000  0.000  0.000 -1.846  0.000  0.000  0.000 Av=0.000 Sg=2.000
+TYR01A0103_003   t    0.000  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+TYR01A0103_004   t    0.000  0.000  0.000 -1.846  0.000  0.000  0.000 Av=0.000 Sg=-1.846
+TYR-1A0103_005   t   -6.820  0.000  0.000  0.000  0.000  0.000  0.000 Av=1.000 Sg=0.000
+

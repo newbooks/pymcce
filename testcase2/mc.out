@@ -1,0 +1,230 @@
+Titration at ph =  7.00 and eh = 0 mv.
+Doing annealing:
+   Step          0, E_minimum =      25.18, E_running =      25.18
+0,2,11,17
+   Exit      50000, E_minimum =      14.45, E_running =      17.19
+   The average running energy, corresponding to H, is   19.225
+   Step          0, E_minimum =      17.19, E_running =      17.19
+0,6,9,14
+   Exit      50000, E_minimum =      14.45, E_running =      26.39
+   The average running energy, corresponding to H, is   18.735
+   Step          0, E_minimum =      26.39, E_running =      26.39
+1,2,9,17
+   Exit      50000, E_minimum =      14.45, E_running =      20.62
+   The average running energy, corresponding to H, is   18.374
+   Step          0, E_minimum =      20.62, E_running =      20.62
+0,3,9,17
+   Exit      50000, E_minimum =      14.45, E_running =      18.95
+   The average running energy, corresponding to H, is   17.864
+   Step          0, E_minimum =      18.95, E_running =      18.95
+1,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      17.70
+   The average running energy, corresponding to H, is   17.333
+   Step          0, E_minimum =      17.70, E_running =      17.70
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.688
+Doing reduction:
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      15.63
+   The average running energy, corresponding to H, is   14.730
+Doing sampling:
+   Step          0, E_minimum =      25.16, E_running =      25.16
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.727
+Doing annealing:
+   Step          0, E_minimum =      37.88, E_running =      37.88
+0,3,11,17
+   Exit      50000, E_minimum =      14.45, E_running =      18.37
+   The average running energy, corresponding to H, is   19.251
+   Step          0, E_minimum =      18.37, E_running =      18.37
+0,2,8,14
+   Exit      50000, E_minimum =      14.45, E_running =      23.99
+   The average running energy, corresponding to H, is   18.799
+   Step          0, E_minimum =      23.99, E_running =      23.99
+1,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      17.01
+   The average running energy, corresponding to H, is   18.366
+   Step          0, E_minimum =      17.01, E_running =      17.01
+1,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      17.01
+   The average running energy, corresponding to H, is   17.898
+   Step          0, E_minimum =      17.01, E_running =      17.01
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   17.373
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.694
+Doing reduction:
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.716
+Doing sampling:
+   Step          0, E_minimum =      31.44, E_running =      31.44
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.717
+Doing annealing:
+   Step          0, E_minimum =      15.63, E_running =      15.63
+1,2,12,16
+   Exit      50000, E_minimum =      14.45, E_running =      20.16
+   The average running energy, corresponding to H, is   19.182
+   Step          0, E_minimum =      20.16, E_running =      20.16
+1,6,12,14
+   Exit      50000, E_minimum =      14.45, E_running =      23.23
+   The average running energy, corresponding to H, is   18.699
+   Step          0, E_minimum =      23.23, E_running =      23.23
+0,3,9,17
+   Exit      50000, E_minimum =      14.45, E_running =      18.95
+   The average running energy, corresponding to H, is   18.422
+   Step          0, E_minimum =      18.95, E_running =      18.95
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   17.904
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,5,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      18.33
+   The average running energy, corresponding to H, is   17.325
+   Step          0, E_minimum =      18.33, E_running =      18.33
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.699
+Doing reduction:
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.714
+Doing sampling:
+   Step          0, E_minimum =      41.25, E_running =      41.25
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.725
+Doing annealing:
+   Step          0, E_minimum =      21.16, E_running =      21.16
+0,5,9,14
+   Exit      50000, E_minimum =      14.45, E_running =      25.39
+   The average running energy, corresponding to H, is   19.283
+   Step          0, E_minimum =      25.39, E_running =      25.39
+0,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      15.63
+   The average running energy, corresponding to H, is   18.899
+   Step          0, E_minimum =      15.63, E_running =      15.63
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   18.420
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,2,12,16
+   Exit      50000, E_minimum =      14.45, E_running =      17.39
+   The average running energy, corresponding to H, is   17.929
+   Step          0, E_minimum =      17.39, E_running =      17.39
+0,3,12,16
+   Exit      50000, E_minimum =      14.45, E_running =      18.56
+   The average running energy, corresponding to H, is   17.281
+   Step          0, E_minimum =      18.57, E_running =      18.57
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.723
+Doing reduction:
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.726
+Doing sampling:
+   Step          0, E_minimum =      24.87, E_running =      24.87
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.690
+Doing annealing:
+   Step          0, E_minimum =      18.57, E_running =      18.57
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   19.254
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,3,11,17
+   Exit      50000, E_minimum =      14.45, E_running =      18.37
+   The average running energy, corresponding to H, is   18.900
+   Step          0, E_minimum =      18.37, E_running =      18.37
+0,2,10,15
+   Exit      50000, E_minimum =      14.45, E_running =      26.09
+   The average running energy, corresponding to H, is   18.372
+   Step          0, E_minimum =      26.09, E_running =      26.09
+0,3,12,13
+   Exit      50000, E_minimum =      14.45, E_running =      22.34
+   The average running energy, corresponding to H, is   17.911
+   Step          0, E_minimum =      22.34, E_running =      22.34
+0,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      15.63
+   The average running energy, corresponding to H, is   17.334
+   Step          0, E_minimum =      15.63, E_running =      15.63
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.686
+Doing reduction:
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.727
+Doing sampling:
+   Step          0, E_minimum =      31.01, E_running =      31.01
+0,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      15.63
+   The average running energy, corresponding to H, is   14.707
+Doing annealing:
+   Step          0, E_minimum =      65.72, E_running =      65.72
+1,5,9,17
+   Exit      50000, E_minimum =      14.45, E_running =      22.94
+   The average running energy, corresponding to H, is   19.307
+   Step          0, E_minimum =      22.94, E_running =      22.94
+1,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      17.70
+   The average running energy, corresponding to H, is   18.827
+   Step          0, E_minimum =      17.70, E_running =      17.70
+0,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      15.63
+   The average running energy, corresponding to H, is   18.401
+   Step          0, E_minimum =      15.63, E_running =      15.63
+0,2,12,16
+   Exit      50000, E_minimum =      14.45, E_running =      17.39
+   The average running energy, corresponding to H, is   17.928
+   Step          0, E_minimum =      17.39, E_running =      17.39
+1,3,12,16
+   Exit      50000, E_minimum =      14.45, E_running =      20.84
+   The average running energy, corresponding to H, is   17.278
+   Step          0, E_minimum =      20.84, E_running =      20.84
+0,2,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      14.45
+   The average running energy, corresponding to H, is   14.733
+Doing reduction:
+   Step          0, E_minimum =      14.45, E_running =      14.45
+0,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      15.63
+   The average running energy, corresponding to H, is   14.723
+Doing sampling:
+   Step          0, E_minimum =      22.52, E_running =      22.52
+0,3,12,17
+   Exit      50000, E_minimum =      14.45, E_running =      15.63
+   The average running energy, corresponding to H, is   14.714
+Standard deviation in independent runs:
+   NTR01A0251_001 0.99 0.98 0.98 0.98 0.99 0.99 stdev =  0.001
+   NTR+1A0251_002 0.01 0.02 0.02 0.02 0.01 0.01 stdev =  0.001
+   TYR01A0251_001 0.87 0.89 0.87 0.88 0.89 0.88 stdev =  0.007
+   TYR01A0251_002 0.13 0.11 0.13 0.12 0.11 0.12 stdev =  0.007
+   TYR01A0251_003 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR-1A0251_004 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR-1A0251_005 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   TYR-1A0251_006 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   ASP01A0252_001 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   ASP01A0252_002 0.01 0.00 0.00 0.00 0.01 0.00 stdev =  0.001
+   ASP02A0252_003 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   ASP02A0252_004 0.01 0.01 0.01 0.01 0.01 0.01 stdev =  0.002
+   ASP-1A0252_005 0.98 0.99 0.98 0.99 0.99 0.98 stdev =  0.002
+   CTR01A0252_001 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   CTR01A0252_002 0.00 0.01 0.00 0.00 0.01 0.00 stdev =  0.002
+   CTR02A0252_003 0.00 0.00 0.00 0.00 0.00 0.00 stdev =  0.000
+   CTR02A0252_004 0.01 0.01 0.01 0.00 0.01 0.01 stdev =  0.002
+   CTR-1A0252_005 0.99 0.98 0.99 0.99 0.99 0.99 stdev =  0.003
