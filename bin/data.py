@@ -84,7 +84,7 @@ class Env:
             keys = [line[:9], line[9:14], line[15:19]]
             value_string = line[20:].strip()
 
-            keys = [x for x in keys if x]
+            keys = [x.strip() for x in keys if x.strip()]
             keys = tuple(keys)
 
             if keys[0] in float_values:
