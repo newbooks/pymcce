@@ -259,4 +259,3 @@ env = Env()
 head3lst = load_head3lst()
 pairwise = load_pairwise()
 
-print(env.tpl)
