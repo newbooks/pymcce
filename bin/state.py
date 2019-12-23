@@ -28,4 +28,3 @@ if __name__ == "__main__":
     for line in lines:
         state = [int(x) for x in re.findall(r"[\w']+", line)]
         analyze_state_energy(state, T=T, ph=ph, eh=eh, cutoff=cutoff)
-
