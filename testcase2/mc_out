@@ -1,0 +1,98 @@
+Titration (1th) at pH =   7.00 Eh =   0.00:
+Identified 4 free residues from 4 residues.
+Doing annealing... 
+Step          0, E_minimum =      21.87, E_running =      21.87
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.706 kCal/mol
+Done
+
+Doing equalibration ... 
+Step          0, E_minimum =      14.45, E_running =      14.45
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.707 kCal/mol
+Done
+
+Reducing conflist ... 0 conformers are marked as fixed.
+
+4 free residues from 4 residues, after reduction.
+
+Doing annealing of MC  1 ...
+Step          0, E_minimum =      33.48, E_running =      33.48
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.721 kCal/mol
+Doing MC  1 ... 
+Step          0, E_minimum =      14.45, E_running =      14.45
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.713 kCal/mol
+Done
+
+Doing annealing of MC  2 ...
+Step          0, E_minimum =      26.20, E_running =      26.20
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.711 kCal/mol
+Doing MC  2 ... 
+Step          0, E_minimum =      14.45, E_running =      14.45
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.710 kCal/mol
+Done
+
+Doing annealing of MC  3 ...
+Step          0, E_minimum =      37.54, E_running =      37.54
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.712 kCal/mol
+Doing MC  3 ... 
+Step          0, E_minimum =      14.45, E_running =      14.45
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.707 kCal/mol
+Done
+
+Doing annealing of MC  4 ...
+Step          0, E_minimum =      41.25, E_running =      41.25
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.708 kCal/mol
+Doing MC  4 ... 
+Step          0, E_minimum =      14.45, E_running =      14.45
+Exit      50000, E_minimum =      14.45, E_running =      15.63
+The average running energy, corresponding to H, is   14.702 kCal/mol
+Done
+
+Doing annealing of MC  5 ...
+Step          0, E_minimum =      40.42, E_running =      40.42
+Exit      50000, E_minimum =      14.45, E_running =      17.01
+The average running energy, corresponding to H, is   14.727 kCal/mol
+Doing MC  5 ... 
+Step          0, E_minimum =      17.01, E_running =      17.01
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.733 kCal/mol
+Done
+
+Doing annealing of MC  6 ...
+Step          0, E_minimum =      61.24, E_running =      61.24
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.703 kCal/mol
+Doing MC  6 ... 
+Step          0, E_minimum =      14.45, E_running =      14.45
+Exit      50000, E_minimum =      14.45, E_running =      14.45
+The average running energy, corresponding to H, is   14.713 kCal/mol
+Done
+
+Conformer     flag   E_self   mc01   mc02   mc03   mc04   mc05   mc06      occ Sgm(n-1)
+NTR01A0251_001   f   -3.357  0.987  0.986  0.984  0.985  0.987  0.984 Av=0.986 Sg=0.001
+NTR+1A0251_002   f   -3.283  0.013  0.014  0.016  0.015  0.013  0.016 Av=0.014 Sg=0.001
+TYR01A0251_001   f   11.027  0.871  0.871  0.875  0.882  0.878  0.876 Av=0.875 Sg=0.004
+TYR01A0251_002   f   13.267  0.128  0.127  0.123  0.115  0.122  0.122 Av=0.123 Sg=0.005
+TYR01A0251_003   f   -0.671  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+TYR-1A0251_004   f   14.580  0.002  0.002  0.001  0.002  0.000  0.001 Av=0.001 Sg=0.001
+TYR-1A0251_005   f   16.664  0.000  0.000  0.000  0.000  0.000  0.001 Av=0.000 Sg=0.000
+TYR-1A0251_006   f    2.527  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+ASP01A0252_001   f    0.448  0.000  0.000  0.000  0.000  0.001  0.000 Av=0.000 Sg=0.000
+ASP01A0252_002   f   -2.099  0.003  0.004  0.002  0.003  0.003  0.003 Av=0.003 Sg=0.001
+ASP02A0252_003   f   -0.859  0.000  0.000  0.001  0.000  0.001  0.000 Av=0.001 Sg=0.000
+ASP02A0252_004   f   -2.427  0.007  0.010  0.009  0.009  0.008  0.008 Av=0.008 Sg=0.001
+ASP-1A0252_005   f   -6.148  0.990  0.986  0.988  0.988  0.986  0.988 Av=0.988 Sg=0.001
+CTR01A0252_001   f   -1.816  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+CTR01A0252_002   f   -5.644  0.007  0.004  0.004  0.006  0.010  0.005 Av=0.006 Sg=0.002
+CTR02A0252_003   f   -3.178  0.000  0.000  0.000  0.000  0.000  0.000 Av=0.000 Sg=0.000
+CTR02A0252_004   f   -5.884  0.008  0.005  0.006  0.006  0.011  0.007 Av=0.007 Sg=0.002
+CTR-1A0252_005   f   -9.726  0.985  0.991  0.990  0.988  0.979  0.988 Av=0.987 Sg=0.004
+

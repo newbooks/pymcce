@@ -3,9 +3,8 @@
 import re
 from energy import *
 
+
 if __name__ == "__main__":
-    ph = 0.0
-    eh = 0.0
 
     if len(sys.argv) > 1:
         cutoff = float(sys.argv[1])
@@ -13,6 +12,8 @@ if __name__ == "__main__":
         cutoff = PW_PRINT_CUT
 
     lines = open("states").readlines()
+
+    # head line, T, ph and eh
     line = lines.pop(0)
     fields = line.strip().split(",")
     mc_parm = {}
@@ -24,11 +25,6 @@ if __name__ == "__main__":
     ph = mc_parm["ph"]
     eh = mc_parm["eh"]
 
-
-
     for line in lines:
         state = [int(x) for x in re.findall(r"[\w']+", line)]
-        analyze_state_energy(state, ph=ph, eh=eh, cutoff=cutoff)
-
-#    for conf in head3lst:
-#        conf.printme()
+        analyze_state_energy(state, T=T, ph=ph, eh=eh, cutoff=cutoff)

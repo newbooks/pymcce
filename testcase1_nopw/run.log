@@ -1,0 +1,26 @@
+Doing step 4. Monte Carlo sampling
+   Load environment
+   Scaling factors:
+   VDW0  = 0.125
+   VDW1  = 0.125
+   VDW   = 0.125
+   TORS  = 0.125
+   ELE   = 1.000
+   DSOLV = 1.000
+   Done
+
+   Load conformer list from file head3.lst...
+   Load pairwise interactions from opp file in folder energies ...
+   Verifying conformers ...
+   Done setting up MC in 0 seconds.
+
+      Titration at ph =  7.00 and eh = 0 mv.
+497664
+248832
+995328
+1492992
+995328
+1492992
+Total time on MC: 46 seconds.
+
+End of step 4.
